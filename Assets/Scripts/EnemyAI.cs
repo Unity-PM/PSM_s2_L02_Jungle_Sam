@@ -63,9 +63,19 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
+
     void Die()
     {
-        // Tu dodamy później system monet i Gore
+        // Znajdź gracza i dodaj mu monety (np. 10 za wroga)
+        PlayerStats pStats = _player.GetComponent<PlayerStats>();
+        if (pStats != null)
+        {
+            pStats.AddCoins(10);
+        }
+
+        Debug.Log("Przeciwnik pokonany! Gracz otrzymuje monety.");
+
+        // Tu w przyszłości dodamy efekty "Gore" (krew/cząsteczki)
         Destroy(gameObject);
     }
 }

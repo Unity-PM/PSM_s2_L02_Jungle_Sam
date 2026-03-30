@@ -7,6 +7,7 @@ public class WeaponBase : MonoBehaviour
 
     protected int _currentAmmo;
     protected float _nextFireTime = 0f;
+    
 
     // Referencja do kamery (potrzebna do Raycastu - strzelania na środek ekranu)
     protected Camera _mainCam;

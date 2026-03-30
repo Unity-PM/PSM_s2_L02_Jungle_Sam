@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 3
   tags:
   - EnemyAI
+  - Enemy
   layers:
   - Default
   - TransparentFX

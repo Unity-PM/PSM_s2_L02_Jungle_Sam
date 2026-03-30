@@ -10,6 +10,7 @@ public class PlayerStats : MonoBehaviour
 
     [Header("UI Reference")]
     public TextMeshProUGUI healthText;
+    public TextMeshProUGUI armorText;
 
     void Start()
     {
@@ -42,11 +43,28 @@ public class PlayerStats : MonoBehaviour
     {
         if (healthText != null)
             healthText.text = "HP: " + currentHealth.ToString("F0");
+
+        if (armorText != null)
+            armorText.text = "Armor: " + armor.ToString("F0");
     }
 
     void Die()
     {
         Debug.Log("Gracz zginął!");
         // Tutaj później dodamy ekran Game Over
+    }
+
+
+
+    // Nowa sekcja dla ekonomii
+
+    [Header("Ekonomia")]
+    public int coins = 0;
+    public TextMeshProUGUI coinsText; // Przeciągnij tu nowy tekst z UI
+
+    public void AddCoins(int amount)
+    {
+        coins += amount;
+        if (coinsText != null) coinsText.text = "Coins: " + coins;
     }
 }
