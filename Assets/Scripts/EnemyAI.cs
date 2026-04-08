@@ -66,7 +66,7 @@ public class EnemyAI : MonoBehaviour
 
     void Die()
     {
-        // Znajdź gracza i dodaj mu monety (np. 10 za wroga)
+        // Znajdź gracza i dodaj mu monety 
         PlayerStats pStats = _player.GetComponent<PlayerStats>();
         if (pStats != null)
         {

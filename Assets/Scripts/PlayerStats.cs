@@ -20,7 +20,7 @@ public class PlayerStats : MonoBehaviour
 
     public void TakeDamage(float amount)
     {
-        // Najpierw obrażenia idą w pancerz (prosta logika Serious Sam)
+        // Najpierw obrażenia idą w pancerz 
         if (armor > 0)
         {
             armor -= amount;
@@ -35,7 +35,9 @@ public class PlayerStats : MonoBehaviour
 
         if (currentHealth <= 0)
         {
+            
             Die();
+
         }
     }
 
@@ -55,7 +57,6 @@ public class PlayerStats : MonoBehaviour
     }
 
 
-
     // Nowa sekcja dla ekonomii
 
     [Header("Ekonomia")]
@@ -67,4 +68,6 @@ public class PlayerStats : MonoBehaviour
         coins += amount;
         if (coinsText != null) coinsText.text = "Coins: " + coins;
     }
+
+
 }

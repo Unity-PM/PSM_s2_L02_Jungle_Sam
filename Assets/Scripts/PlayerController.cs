@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem; // Nowa biblioteka
 
 public class PlayerController : MonoBehaviour
@@ -12,6 +13,9 @@ public class PlayerController : MonoBehaviour
     [Header("Look Settings")]
     public float mouseSensitivity = 0.1f; // Nowy system używa innych wartości dla myszy
     public Transform playerCamera;
+
+    [Header("Weapon Reference")]
+    public WeaponBase currentWeapon;
 
     private CharacterController _controller;
     private Vector3 _velocity;
@@ -28,6 +32,12 @@ public class PlayerController : MonoBehaviour
     {
         _controller = GetComponent<CharacterController>();
         Cursor.lockState = CursorLockMode.Locked;
+        
+        // Znalezienie broni w dzieciach (jeśli nie przypisana w Inspektorze)
+        if (currentWeapon == null)
+        {
+            currentWeapon = GetComponentInChildren<WeaponBase>();
+        }
     }
 
     void Update()
@@ -35,6 +45,7 @@ public class PlayerController : MonoBehaviour
         ReadInput();
         HandleLook();
         HandleMovement();
+        UpdateWeaponAnimations();
     }
 
     void ReadInput()
@@ -85,5 +96,18 @@ public class PlayerController : MonoBehaviour
         _controller.Move(_velocity * Time.deltaTime);
     }
 
+    void UpdateWeaponAnimations()
+    {
+        if (currentWeapon == null)
+            return;
 
+        // Sprawdzenie, czy gracz się porusza
+        bool isMoving = _moveInput.magnitude > 0.1f;
+        
+        // Sprawdzenie, czy gracz sprintuje
+        bool isSprinting = isMoving && _sprintPressed;
+
+        // Wysłanie danych animacji do broni
+        currentWeapon.SetMovementAnimations(isMoving && !isSprinting, isSprinting);
+    }
 }

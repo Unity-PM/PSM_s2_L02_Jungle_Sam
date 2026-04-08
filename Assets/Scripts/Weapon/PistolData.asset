@@ -10,14 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 81b34883c8999a2429965f78e5f08ee5, type: 3}
-  m_Name: AssaultRifleData
+  m_Name: PistolData
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
-  weaponName: 
-  weaponPrefab: {fileID: 0}
-  damage: 10
+  weaponName: Pistol
+  weaponPrefab: {fileID: 919132149155446097, guid: a4dbb4bce0570614f82d47659bdd31fa, type: 3}
+  damage: 15
   fireRate: 0.1
   range: 100
-  maxAmmo: 50
-  isAutomatic: 1
+  maxAmmo: 7
+  reloadTime: 1.5
+  shootAnimationDuration: 0.8
+  isAutomatic: 0
   muzzleFlashPrefab: {fileID: 0}
   shootSound: {fileID: 0}
