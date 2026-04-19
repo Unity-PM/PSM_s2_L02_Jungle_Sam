@@ -12,8 +12,9 @@ public class WeaponData : ScriptableObject
     public float fireRate = 0.5f; // Czas przerwy między strzałami
     public float range = 50f;
     public int maxAmmo = 30;
+    public int maxReserveAmmo = 90; // Amunicja w schowku
     public float reloadTime = 1.5f; // Czas trwania animacji przeładowania
-    public float shootAnimationDuration = 0.3f; // Czas trwania animacji strzału
+    public float shootAnimationDuration = 0.25f;
     public bool isAutomatic = false;
 
     [Header("Efekty")]

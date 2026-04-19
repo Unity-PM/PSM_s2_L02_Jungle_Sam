@@ -15,11 +15,12 @@ MonoBehaviour:
   weaponName: Pistol
   weaponPrefab: {fileID: 919132149155446097, guid: a4dbb4bce0570614f82d47659bdd31fa, type: 3}
   damage: 15
-  fireRate: 0.1
+  fireRate: 0.3
   range: 100
-  maxAmmo: 7
-  reloadTime: 1.5
-  shootAnimationDuration: 0.8
+  maxAmmo: 11
+  maxReserveAmmo: 90
+  reloadTime: 1.667
+  shootAnimationDuration: 0.283
   isAutomatic: 0
   muzzleFlashPrefab: {fileID: 0}
   shootSound: {fileID: 0}

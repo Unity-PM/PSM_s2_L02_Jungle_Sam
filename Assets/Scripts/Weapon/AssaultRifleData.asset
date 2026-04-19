@@ -17,7 +17,10 @@ MonoBehaviour:
   damage: 10
   fireRate: 0.08
   range: 100
-  maxAmmo: 50
+  maxAmmo: 30
+  maxReserveAmmo: 240
+  reloadTime: 1.5
+  shootAnimationDuration: 0.25
   isAutomatic: 1
   muzzleFlashPrefab: {fileID: 0}
   shootSound: {fileID: 0}
