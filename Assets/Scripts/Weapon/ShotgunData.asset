@@ -17,7 +17,8 @@ MonoBehaviour:
   damage: 50
   fireRate: 0.8
   range: 30
-  maxAmmo: 30
+  maxAmmo: 5
+  maxReserveAmmo: 90
   reloadTime: 1.5
   shootAnimationDuration: 0.25
   isAutomatic: 0

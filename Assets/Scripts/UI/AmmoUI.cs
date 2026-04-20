@@ -16,14 +16,14 @@ public class AmmoUI : MonoBehaviour
     void Start()
     {
         // Znalezienie PlayerController
-        _playerController = FindObjectOfType<PlayerController>();
+        _playerController = Object.FindAnyObjectByType<PlayerController>();
         if (_playerController == null)
         {
             Debug.LogError("AmmoUI: PlayerController not found!");
             return;
         }
 
-        // Ustawienie pozycji (lewy dolny róg + offset)
+        /* Ustawienie pozycji (lewy dolny róg + offset)
         RectTransform rectTransform = GetComponent<RectTransform>();
         if (rectTransform != null)
         {
@@ -32,6 +32,7 @@ public class AmmoUI : MonoBehaviour
             rectTransform.anchoredPosition = new Vector2(offsetX, offsetY);
             rectTransform.pivot = new Vector2(0, 0);
         }
+        */
 
         UpdateAmmoDisplay();
     }
@@ -50,7 +51,7 @@ public class AmmoUI : MonoBehaviour
         int maxAmmo = _playerController.currentWeapon.GetMaxAmmo();
         int reserveAmmo = _playerController.currentWeapon.GetReserveAmmo();
 
-        // Format: "11 (30)" = 11 w magazynku, 30 w schowku
-        ammoText.text = $"{currentAmmo}/{reserveAmmo}";
+        // Format:  11 w magazynku, 30 w schowku
+        ammoText.text = $"{currentAmmo} / {reserveAmmo}";
     }
 }

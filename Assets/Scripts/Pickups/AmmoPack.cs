@@ -16,15 +16,16 @@ public class AmmoPack : MonoBehaviour
     private Quaternion _startRotation;
     private bool _isActive = true;
     private float _respawnTimer = 0f;
-    private Renderer _renderer;
+    private Renderer[] _renderers;
     private Collider _collider;
 
     void Start()
     {
         _startPosition = transform.position;
         _startRotation = transform.rotation; // ← Zapamiętaj rotację
-        _renderer = GetComponent<Renderer>();
+        _renderers = GetComponentsInChildren<Renderer>(true);
         _collider = GetComponent<Collider>();
+        
 
         if (_collider == null)
             Debug.LogError("AmmoPack: Collider not found!");
@@ -78,11 +79,11 @@ public class AmmoPack : MonoBehaviour
         _isActive = false;
         _respawnTimer = respawnTime;
 
-        // Ukryj paczkę
-        _renderer.enabled = false;
-        _collider.enabled = false;
+        // Ukryj WSZYSTKIE renderery
+        foreach (var r in _renderers)
+            r.enabled = false;
 
-        // Resetuj rotację i pozycję
+        _collider.enabled = false;
         transform.rotation = _startRotation;
     }
 
@@ -90,11 +91,11 @@ public class AmmoPack : MonoBehaviour
     {
         _isActive = true;
 
-        // Pokaż paczkę
-        _renderer.enabled = true;
-        _collider.enabled = true;
+        // Pokaż WSZYSTKIE renderery
+        foreach (var r in _renderers)
+            r.enabled = true;
 
-        // Resetuj pozycję do startowej
+        _collider.enabled = true;
         transform.position = _startPosition;
         transform.rotation = _startRotation;
 

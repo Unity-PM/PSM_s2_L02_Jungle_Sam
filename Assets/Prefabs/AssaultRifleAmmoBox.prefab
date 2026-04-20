@@ -96,10 +96,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AmmoPack
   ammoAmount: 30
-  respawnTime: 5
+  respawnTime: 2
   rotationSpeed: 45
   bobbingSpeed: 2
   bobbingHeight: 0.1
+  invertRotation: 0
 --- !u!135 &6679214896236242193
 SphereCollider:
   m_ObjectHideFlags: 0
