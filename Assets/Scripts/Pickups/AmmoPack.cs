@@ -3,6 +3,7 @@ using UnityEngine;
 public class AmmoPack : MonoBehaviour
 {
     [Header("Ammo Configuration")]
+    [SerializeField] private AmmoCategory ammoCategory = AmmoCategory.PistolSmg;
     [SerializeField] private int ammoAmount = 9;
     [SerializeField] private float respawnTime = 5f;
 
@@ -63,14 +64,22 @@ public class AmmoPack : MonoBehaviour
 
         if (other.CompareTag("Player"))
         {
-            PlayerController player = other.GetComponent<PlayerController>();
-            if (player != null && player.currentWeapon != null)
+            WeaponManager weaponManager = other.GetComponentInChildren<WeaponManager>();
+            if (weaponManager == null)
             {
-                // Dodaj amunicję do aktualnie wybranej broni
-                player.currentWeapon.AddAmmo(ammoAmount);
-                Debug.Log($"Picked up {ammoAmount} ammo!");
-                Disable();
+                Debug.LogWarning("AmmoPack: WeaponManager not found on player.");
+                return;
             }
+
+            int affectedWeapons = weaponManager.AddAmmoToCategory(ammoCategory, ammoAmount);
+            if (affectedWeapons <= 0)
+            {
+                Debug.Log($"No weapons found for ammo category: {ammoCategory}");
+                return;
+            }
+
+            Debug.Log($"Picked up {ammoAmount} ammo for {ammoCategory}. Updated weapons: {affectedWeapons}");
+            Disable();
         }
     }
 
@@ -96,9 +105,8 @@ public class AmmoPack : MonoBehaviour
             r.enabled = true;
 
         _collider.enabled = true;
-        transform.position = _startPosition;
-        transform.rotation = _startRotation;
 
+        transform.SetPositionAndRotation(_startPosition, _startRotation);
         Debug.Log("Ammo pack respawned!");
     }
 

@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81b34883c8999a2429965f78e5f08ee5, type: 3}
   m_Name: AssaultRifleData
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
-  weaponName: 
+  weaponName: AK
   weaponPrefab: {fileID: 0}
+  ammoCategory: 1
   damage: 10
   fireRate: 0.08
   range: 100

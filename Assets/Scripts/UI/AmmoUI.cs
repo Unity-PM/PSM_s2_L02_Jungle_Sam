@@ -7,9 +7,7 @@ public class AmmoUI : MonoBehaviour
     [Header("UI References")]
     [SerializeField] private TextMeshProUGUI ammoText;
 
-    [Header("Position")]
-    [SerializeField] private float offsetX = 30f;
-    [SerializeField] private float offsetY = 30f;
+    
 
     private PlayerController _playerController;
 

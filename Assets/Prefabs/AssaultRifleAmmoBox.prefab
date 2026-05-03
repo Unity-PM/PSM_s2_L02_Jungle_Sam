@@ -95,7 +95,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 080c3b4b9a0dedd46a2afbf699710f84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AmmoPack
-  ammoAmount: 30
+  ammoCategory: 1
+  ammoAmount: 90
   respawnTime: 2
   rotationSpeed: 45
   bobbingSpeed: 2

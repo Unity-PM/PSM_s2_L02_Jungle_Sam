@@ -1,11 +1,20 @@
 ﻿using UnityEngine;
 
+public enum AmmoCategory
+{
+    PistolSmg,
+    Rifle
+}
+
 [CreateAssetMenu(fileName = "New Weapon Data", menuName = "ProjectJungle/Weapon Data")]
 public class WeaponData : ScriptableObject
 {
     [Header("Informacje ogólne")]
     public string weaponName;
     public GameObject weaponPrefab; // Model 3D broni
+
+    [Header("Typ amunicji")]
+    public AmmoCategory ammoCategory = AmmoCategory.PistolSmg;
 
     [Header("Statystyki")]
     public float damage = 10f;
