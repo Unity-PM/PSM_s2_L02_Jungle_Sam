@@ -8,6 +8,7 @@ public class WeaponBase : MonoBehaviour
     private static readonly int ReloadEndHash = Animator.StringToHash("ReloadEnd");
     private static readonly int IsWalkingHash = Animator.StringToHash("IsWalking");
     private static readonly int IsRunningHash = Animator.StringToHash("IsRunning");
+    private static readonly int InspectHash = Animator.StringToHash("Inspect");
 
     public WeaponData weaponData;
 
@@ -69,6 +70,14 @@ public class WeaponBase : MonoBehaviour
 
         if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame && !_isReloading && _currentAmmo < weaponData.maxAmmo)
             Reload();
+
+        if (Keyboard.current.fKey.wasPressedThisFrame&& !_isReloading)
+        {
+            if (_weaponAnimator != null)
+            {
+                _weaponAnimator.SetTrigger(InspectHash);
+            }
+        }
     }
 
     public void TryShoot()
