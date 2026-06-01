@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem; // Nowa biblioteka
 
 public class PlayerController : MonoBehaviour
@@ -28,11 +27,12 @@ public class PlayerController : MonoBehaviour
     private bool _jumpPressed;
     private bool _sprintPressed;
 
-    void Start()
+    void Awake()
     {
         _controller = GetComponent<CharacterController>();
         Cursor.lockState = CursorLockMode.Locked;
-        
+        Cursor.visible = false;
+
         // Znalezienie broni w dzieciach (jeśli nie przypisana w Inspektorze)
         if (currentWeapon == null)
         {
@@ -51,22 +51,32 @@ public class PlayerController : MonoBehaviour
     void ReadInput()
     {
         // Odczyt myszy i klawiatury w nowym systemie
-        if (Mouse.current != null)
-            _lookInput = Mouse.current.delta.ReadValue();
+        _lookInput = Mouse.current != null ? Mouse.current.delta.ReadValue() : Vector2.zero;
 
         if (Keyboard.current != null)
         {
-            _moveInput = new Vector2(
+            Vector2 moveInput = new Vector2(
                 (Keyboard.current.dKey.isPressed ? 1 : 0) - (Keyboard.current.aKey.isPressed ? 1 : 0),
                 (Keyboard.current.wKey.isPressed ? 1 : 0) - (Keyboard.current.sKey.isPressed ? 1 : 0)
             );
+
+            _moveInput = Vector2.ClampMagnitude(moveInput, 1f);
             _jumpPressed = Keyboard.current.spaceKey.wasPressedThisFrame;
             _sprintPressed = Keyboard.current.leftShiftKey.isPressed;
+        }
+        else
+        {
+            _moveInput = Vector2.zero;
+            _jumpPressed = false;
+            _sprintPressed = false;
         }
     }
 
     void HandleLook()
     {
+        if (playerCamera == null)
+            return;
+
         float mouseX = _lookInput.x * mouseSensitivity;
         float mouseY = _lookInput.y * mouseSensitivity;
 
@@ -102,8 +112,8 @@ public class PlayerController : MonoBehaviour
             return;
 
         // Sprawdzenie, czy gracz się porusza
-        bool isMoving = _moveInput.magnitude > 0.1f;
-        
+        bool isMoving = _moveInput.sqrMagnitude > 0.01f;
+
         // Sprawdzenie, czy gracz sprintuje
         bool isSprinting = isMoving && _sprintPressed;
 

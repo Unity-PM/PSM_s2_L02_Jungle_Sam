@@ -20,8 +20,8 @@ MonoBehaviour:
   range: 100
   maxAmmo: 30
   maxReserveAmmo: 240
-  reloadTime: 2.24
-  shootAnimationDuration: 0.19
+  reloadTime: 3.7
+  shootAnimationDuration: 0.3
   isAutomatic: 1
   muzzleFlashPrefab: {fileID: 0}
   shootSound: {fileID: 0}

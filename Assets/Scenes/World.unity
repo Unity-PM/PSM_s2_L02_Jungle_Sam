@@ -330,7 +330,7 @@ Transform:
   m_GameObject: {fileID: 320758654}
   serializedVersion: 2
   m_LocalRotation: {x: 0.9990483, y: 0.043619405, z: -0, w: 0}
-  m_LocalPosition: {x: 0, y: -0.3, z: 0}
+  m_LocalPosition: {x: 0.04, y: -0.29, z: -0.04}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -362,7 +362,7 @@ Transform:
   m_GameObject: {fileID: 352148717}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 6.49, y: 0.3527, z: 13.53244}
+  m_LocalPosition: {x: 6.49, y: 0.3527, z: 14.73}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -583,7 +583,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WaveSpawner
   waves:
   - waveName: Wave 1
-    enemyPrefab: {fileID: 5719061708769527978, guid: b079dbf438502224988e2024694c66d7, type: 3}
+    enemyPrefab: {fileID: 4493914613880827488, guid: 6dc4cf4496348884d8ee27743ae38562, type: 3}
     count: 10
     rate: 2
   - waveName: 
@@ -5950,7 +5950,7 @@ MonoBehaviour:
   gravity: -19.62
   mouseSensitivity: 0.15
   playerCamera: {fileID: 9103767874889322266}
-  currentWeapon: {fileID: 4006395776221883397}
+  currentWeapon: {fileID: 0}
 --- !u!1 &3942852606659127895
 GameObject:
   m_ObjectHideFlags: 0
