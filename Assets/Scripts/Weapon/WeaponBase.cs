@@ -28,6 +28,10 @@ public class WeaponBase : MonoBehaviour
 
     public bool isUnlocked = false;
 
+    [Header("Raycast")]
+    [SerializeField] private LayerMask hitMask;
+    [SerializeField] private bool drawDebugRay = true;
+
     void Start()
     {
         _mainCam = Camera.main;
@@ -115,19 +119,46 @@ public class WeaponBase : MonoBehaviour
 
         if (weaponData.muzzleFlashPrefab != null)
         {
-            GameObject flash = Instantiate(weaponData.muzzleFlashPrefab, transform.position, transform.rotation);
+            GameObject flash = Instantiate(
+                weaponData.muzzleFlashPrefab,
+                transform.position,
+                transform.rotation
+            );
+
             Destroy(flash, 1f);
         }
 
         if (_mainCam == null)
             return;
 
-        Ray ray = _mainCam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
-        if (Physics.Raycast(ray, out RaycastHit hit, weaponData.range))
+        Ray ray = _mainCam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+
+        bool hasHit = Physics.Raycast(
+            ray,
+            out RaycastHit hit,
+            weaponData.range,
+            hitMask,
+            QueryTriggerInteraction.Ignore
+        );
+
+        if (drawDebugRay)
         {
-            EnemyAI enemy = hit.transform.GetComponent<EnemyAI>();
+            Debug.DrawRay(
+                ray.origin,
+                ray.direction * (hasHit ? hit.distance : weaponData.range),
+                hasHit ? Color.red : Color.green,
+                0.25f
+            );
+        }
+
+        if (hasHit)
+        {
+            EnemyAI enemy = hit.collider.GetComponentInParent<EnemyAI>();
+
             if (enemy != null)
+            {
                 enemy.TakeDamage(weaponData.damage);
+            }
         }
 
         if (_currentAmmo == 0)
