@@ -4,15 +4,47 @@ using System;
 
 public class ClockUI : MonoBehaviour
 {
-    private TextMeshProUGUI _textMesh;
+    private static readonly string[] PolandTimeZoneIds =
+    {
+        "Central European Standard Time",
+        "Europe/Warsaw"
+    };
 
-    void Start() => _textMesh = GetComponent<TextMeshProUGUI>();
+    private TextMeshProUGUI _textMesh;
+    private TimeZoneInfo _polandZone;
+
+    void Start()
+    {
+        _textMesh = GetComponent<TextMeshProUGUI>();
+        _polandZone = GetPolandTimeZone();
+    }
 
     void Update()
     {
-        // Pobieranie czasu w Polsce (CET/CEST)
-        var polandZone = TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time");
-        DateTime polandTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, polandZone);
+        if (_textMesh == null)
+            return;
+
+        DateTime polandTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _polandZone);
         _textMesh.text = polandTime.ToString("HH:mm");
+    }
+
+    private static TimeZoneInfo GetPolandTimeZone()
+    {
+        foreach (string timeZoneId in PolandTimeZoneIds)
+        {
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+            }
+            catch (TimeZoneNotFoundException)
+            {
+            }
+            catch (InvalidTimeZoneException)
+            {
+            }
+        }
+
+        Debug.LogWarning("ClockUI: Poland time zone not found. Falling back to local system time.");
+        return TimeZoneInfo.Local;
     }
 }

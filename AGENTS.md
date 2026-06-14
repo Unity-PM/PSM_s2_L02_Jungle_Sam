@@ -1,7 +1,7 @@
 # Jungle Sam - Agent Instructions
 
 Project:
-Unity 6.3 URP C# single-player FPS Horde Shooter inspired by Serious Sam.
+Unity 6.3 URP C# single-player FPS Horde Shooter inspired by Serious Sam/Escape from Tarkov/Call of Duty Zombies.
 
 Current context:
 - Existing WeaponBase.cs uses raycast shooting.
@@ -48,4 +48,4 @@ After every task, summarize:
 2. what was added/modified,
 3. Inspector setup,
 4. Unity Play Mode test steps,
-5. suggested commit message.
+5. suggested commit message.Prze

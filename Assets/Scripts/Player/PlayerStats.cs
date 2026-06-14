@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class PlayerStats : MonoBehaviour
 {
+    public static event System.Action<PlayerStats, float> PlayerDamaged;
+
     [Header("Health")]
     [SerializeField] private float maxHealth = 100f;
     [SerializeField] private float armor = 0f;
@@ -51,6 +53,7 @@ public class PlayerStats : MonoBehaviour
         armor = Mathf.Max(0f, armor);
 
         UpdateUI();
+        PlayerDamaged?.Invoke(this, amount);
 
         if (_currentHealth <= 0f)
             Die();

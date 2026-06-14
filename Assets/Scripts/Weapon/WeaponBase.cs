@@ -3,6 +3,8 @@ using UnityEngine.InputSystem;
 
 public class WeaponBase : MonoBehaviour
 {
+    public static event System.Action<WeaponBase, EnemyAI> EnemyHit;
+
     private static readonly int ShootHash = Animator.StringToHash("Shoot");
     private static readonly int ReloadHash = Animator.StringToHash("Reload");
     private static readonly int ReloadEndHash = Animator.StringToHash("ReloadEnd");
@@ -18,7 +20,6 @@ public class WeaponBase : MonoBehaviour
     protected Animator _weaponAnimator;
     protected Camera _mainCam;
     protected AudioSource _audioSource;
-
     protected bool _isReloading;
     protected float _reloadEndTime;
     protected float _shootAnimEndTime;
@@ -43,7 +44,6 @@ public class WeaponBase : MonoBehaviour
             _weaponAnimator = GetComponentInChildren<Animator>();
 
         _audioSource = GetComponent<AudioSource>();
-
         if (_weaponAnimator == null)
             Debug.LogError("Animator not found on weapon: " + gameObject.name);
 
@@ -72,10 +72,15 @@ public class WeaponBase : MonoBehaviour
                 TryShoot();
         }
 
-        if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame && !_isReloading && _currentAmmo < weaponData.maxAmmo)
+        Keyboard keyboard = Keyboard.current;
+
+        if (keyboard == null)
+            return;
+
+        if (keyboard.rKey.wasPressedThisFrame && !_isReloading && _currentAmmo < weaponData.maxAmmo)
             Reload();
 
-        if (Keyboard.current.fKey.wasPressedThisFrame&& !_isReloading)
+        if (keyboard.fKey.wasPressedThisFrame && !_isReloading)
         {
             if (_weaponAnimator != null)
             {
@@ -158,6 +163,7 @@ public class WeaponBase : MonoBehaviour
             if (enemy != null)
             {
                 enemy.TakeDamage(weaponData.damage);
+                EnemyHit?.Invoke(this, enemy);
             }
         }
 

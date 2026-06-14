@@ -1,43 +1,77 @@
-# Project Jungle Horde (MVP)
+# Jungle Sam
 
-An intensive, arcade Horde Shooter / FPS game inspired by the classic gameplay of the *Serious Sam* series. The project focuses on high-performance rendering of enemy crowds, fluid retro-styled movement, and a decoupled, scalable architecture using modern Unity 6 features.
+Unity FPS / Horde Shooter inspired by the fast arcade combat of Serious Sam and wave-based survival shooters. The current MVP focuses on responsive first-person movement, raycast weapons, zombie AI on NavMesh, ammo pickups, HUD feedback, and a configurable wave spawner.
 
 ---
 
-## 🛠️ Tech Stack & Tools
+## Tech Stack
 
-* **Game Engine:** Unity 6.3 (LTS)
+* **Engine:** Unity 6000.3.10f1
 * **Render Pipeline:** Universal Render Pipeline (URP)
-* **Language:** C# (SOLID principles, Event-Driven Architecture)
-* **Input System:** Unity New Input System Package
-* **Navigation:** Advanced NavMesh Surfaces
-
-
----
-
-## 🚀 Key Features & Gameplay Architecture
-
-* **Snappy FPS Controller:** Custom-built character controller utilizing the New Input System. Features high-velocity jumping, responsive airborne control, and sprinting mechanics tailored for fast-paced arcade combat.
-* **Performance-Optimized AI Hordes:** Enemy AI built on `NavMeshAgent` with a custom **AI Throttling system** (tick rate updates instead of per-frame calculations). This ensures smooth CPU performance even with 50+ active entities on screen.
-* **Event-Driven Wave Manager:** The spawner communicates with enemies via static C# Actions (`OnEnemyDied`). It completely eliminates expensive runtime operations like `GameObject.Find` or `GetComponent` in `Update` loops.
-* **Robust Weapon Pipeline:** Implemented a modular weapon hierarchy that prevents Blender-to-Unity axis/scale overriding via structural container layers (`Weapon_Scale_Root` -> `Rotation_Fix`).
-* **Dynamic UI with Time-Zone Mapping:** Includes a unique HUD feature displaying real-time Polish local time (CET/CEST) by converting system UTC data independently of the player's local hardware settings.
+* **Language:** C#
+* **Input:** Unity New Input System package
+* **Navigation:** Unity AI Navigation / NavMesh
+* **UI:** TextMesh Pro
 
 ---
 
-## 📈 Current Project Status (What's Implemented?)
+## Implemented Systems
 
-### 1. Gameplay & Controller
-* Fully functional FPS movement with customized snappy gravity simulation.
-* Camera clipping prevention with fine-tuned Near Clip Planes (0.01) for clean weapon mesh rendering.
-* Locked 16:9 aspect ratio scaling environment.
+### Player
 
-### 2. Weapons & Ammo System
-* **Pistol & 7.62x39mm Assault Rifle:** Base configuration complete with custom structural containers.
-* Integrated asset animations: *Idle, Walk, Run, Shoot (loopable for Full-Auto), Reload, Inspect*.
-* Functional Ammo Pickups mapped to specific weapon ammunition types.
+* FPS movement built on `CharacterController`.
+* Walk, sprint, jump, gravity, and mouse look.
+* Weapon movement animation forwarding through `WeaponBase.SetMovementAnimations`.
 
-### 3. AI & Game Loop
-* Basic Zombie AI with automated **Mecanim Blend Tree** integration (Idle/Walk/Run blending based on physical velocity).
-* Proximity-based attack triggers and state control.
-* Scalable Wave Spawner loop utilizing event-driven entity tracking.
+### Weapons and Ammo
+
+* `WeaponBase` handles raycast shooting, reload timing, reserve ammo, shoot/reload/inspect animator triggers, muzzle flash spawning, and shoot audio.
+* `WeaponData` ScriptableObjects store weapon stats, ammo category, fire mode, effects, and prefab references.
+* Semi-auto and full-auto weapons are supported through `WeaponData.isAutomatic`.
+* `WeaponManager` switches weapon slots with keys 1, 2, and 3.
+* `AmmoPack` adds ammo by `AmmoCategory` and supports pickup respawn.
+
+### Enemies
+
+* `EnemyAI` uses `NavMeshAgent` for zombie movement.
+* AI logic is throttled with `aiTickRate` instead of running full decision logic every frame.
+* Zombies support detection range, chase, attack cooldown, damage, hit animation, death animation, collider disabling, and coin rewards.
+* Death is exposed through both an instance event (`Died`) and the existing static action (`OnEnemyDied`) for compatibility.
+
+### Waves
+
+* `WaveSpawner` supports multiple waves, spawn points, max alive enemies per wave, optional looping, optional manual start, and NavMesh spawn sampling.
+* Spawned enemies are tracked through the instance `EnemyAI.Died` event.
+* Wave status can be displayed through a `TextMeshProUGUI` field.
+
+### UI
+
+* `AmmoUI` displays current magazine ammo and reserve ammo for the selected weapon.
+* `PlayerStats` updates health, armor, and coin text fields.
+* `ClockUI` displays Polish local time and caches the time-zone lookup.
+
+---
+
+## Important Project Notes
+
+* Do not manually edit Unity `.meta` files.
+* Keep scene and prefab changes scoped and intentional.
+* Main gameplay scripts currently rely on Inspector references, object tags, and prefab setup.
+* The player object must have the `Player` tag for `EnemyAI`.
+* Wave spawners require configured waves, enemy prefabs, spawn points, and a baked NavMesh.
+* Weapon prefabs need `WeaponBase`, assigned `WeaponData`, animator parameters, and optional `AudioSource`.
+
+---
+
+## Main Script Locations
+
+* `Assets/Scripts/Player/PlayerController.cs`
+* `Assets/Scripts/Player/PlayerStats.cs`
+* `Assets/Scripts/Weapon/WeaponBase.cs`
+* `Assets/Scripts/Weapon/WeaponData.cs`
+* `Assets/Scripts/Weapon/WeaponManager.cs`
+* `Assets/Scripts/Enemy/EnemyAI.cs`
+* `Assets/Scripts/Spawning/WaveSpawner.cs`
+* `Assets/Scripts/Pickups/AmmoPack.cs`
+* `Assets/Scripts/UI/AmmoUI.cs`
+* `Assets/Scripts/UI/ClockUI.cs`
