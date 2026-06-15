@@ -9,7 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 495364}
-  - component: {fileID: 19310186}
   - component: {fileID: 3380234}
   - component: {fileID: 2393040}
   m_Layer: 0
@@ -34,15 +33,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!193 &19310186
-Tree:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 196434}
-  m_SpeedTreeWindAsset: {fileID: 0}
-  m_TreeData: {fileID: 11473604}
 --- !u!33 &3380234
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -244,8 +234,8 @@ Material:
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _ShadowOffsetScale: 1
-    - _ShadowStrength: 0.9
-    - _Smoothness: 0.307
+    - _ShadowStrength: 0.79
+    - _Smoothness: 0.061
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SquashAmount: 1
@@ -295,7 +285,7 @@ Material:
   m_LightmapFlags: 1
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 2000
+  m_CustomRenderQueue: -1
   stringTagMap:
     RenderType: Opaque
   disabledShaderPasses:
@@ -412,7 +402,7 @@ Material:
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _Smoothness: 0.195
+    - _Smoothness: 0.131
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SquashAmount: 1
@@ -646,7 +636,7 @@ MonoBehaviour:
   m_Name: Tree Data
   m_EditorClassIdentifier: 
   _uniqueID: 3563
-  materialHash: 2abcb09c8acd8188d6430025bca587d9-550813696
+  materialHash: b778ee3037509744092992f900a1899e-550813696
   root:
     _uniqueID: 1
     seed: 1234
