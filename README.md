@@ -2,7 +2,6 @@
 
 Unity FPS / Horde Shooter inspired by the fast arcade combat of Serious Sam and wave-based survival shooters. The current MVP focuses on responsive first-person movement, raycast weapons, zombie AI on NavMesh, ammo pickups, HUD feedback, and a configurable wave spawner.
 
----
 
 ## Tech Stack
 
@@ -13,7 +12,7 @@ Unity FPS / Horde Shooter inspired by the fast arcade combat of Serious Sam and 
 * **Navigation:** Unity AI Navigation / NavMesh
 * **UI:** TextMesh Pro
 
----
+
 
 ## Implemented Systems
 
@@ -74,4 +73,6 @@ Unity FPS / Horde Shooter inspired by the fast arcade combat of Serious Sam and 
 * `Assets/Scripts/Spawning/WaveSpawner.cs`
 * `Assets/Scripts/Pickups/AmmoPack.cs`
 * `Assets/Scripts/UI/AmmoUI.cs`
-* `Assets/Scripts/UI/ClockUI.cs`
+
+
+
