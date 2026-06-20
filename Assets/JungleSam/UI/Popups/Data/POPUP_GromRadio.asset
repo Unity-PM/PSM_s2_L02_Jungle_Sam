@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f2dbb77c9274c40b0f9b4f7e248203a, type: 3}
+  m_Name: POPUP_GromRadio
+  m_EditorClassIdentifier: 
+  popupId: POPUP_GromRadio
+  itemImage: {fileID: 0}
+  categoryLabel: DOWÓD / ŁUP FABULARNY
+  title: RADIO GROM DIVISION
+  subtitle: Kanał awaryjny CH-07
+  body: Odebrano urwany sygnał awaryjny. Jednostka Grom Division zgłasza utratę kontaktu z personelem Black Orchid. W pobliżu nabrzeża wykryto ruch zainfekowanych. Przygotuj się na kontakt.
+  continueButtonText: KONTYNUUJ
+  lockPlayerWhileOpen: 1

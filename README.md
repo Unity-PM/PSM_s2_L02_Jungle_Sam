@@ -64,15 +64,96 @@ Unity FPS / Horde Shooter inspired by the fast arcade combat of Serious Sam and 
 
 ## Main Script Locations
 
-* `Assets/Scripts/Player/PlayerController.cs`
-* `Assets/Scripts/Player/PlayerStats.cs`
-* `Assets/Scripts/Weapon/WeaponBase.cs`
-* `Assets/Scripts/Weapon/WeaponData.cs`
-* `Assets/Scripts/Weapon/WeaponManager.cs`
-* `Assets/Scripts/Enemy/EnemyAI.cs`
-* `Assets/Scripts/Spawning/WaveSpawner.cs`
-* `Assets/Scripts/Pickups/AmmoPack.cs`
-* `Assets/Scripts/UI/AmmoUI.cs`
+* `Assets/JungleSam/Scripts/Player/PlayerController.cs`
+* `Assets/JungleSam/Scripts/Player/PlayerStats.cs`
+* `Assets/JungleSam/Scripts/Weapon/WeaponBase.cs`
+* `Assets/JungleSam/Scripts/Weapon/WeaponData.cs`
+* `Assets/JungleSam/Scripts/Weapon/WeaponManager.cs`
+* `Assets/JungleSam/Scripts/Enemy/EnemyAI.cs`
+* `Assets/JungleSam/Scripts/Spawning/WaveSpawner.cs`
+* `Assets/JungleSam/Scripts/Pickups/AmmoPack.cs`
+* `Assets/JungleSam/Scripts/UI/AmmoUI.cs`
+* `Assets/JungleSam/Scripts/Combat/IDamageable.cs`
+* `Assets/JungleSam/Enemies/MutantStalker/Scripts/MutantStalkerAI.cs`
+* `Assets/JungleSam/Enemies/MutantStalker/Scripts/MutantStalkerAnimator.cs`
+
+---
+
+## Project Layout Update - 2026-06-19
+
+The project was reorganized into first-party and third-party areas:
+
+```text
+Assets/
+  JungleSam/
+    Scripts/
+    Prefabs/
+    Scenes/Test/
+    ScriptableObjects/Weapons/
+    Settings/
+    UI/Sprites/
+    Enemies/MutantStalker/
+  ThirdParty/
+    Flooded_Grounds/
+    Models/
+```
+
+Current Build Settings scenes:
+
+```text
+Assets/ThirdParty/Flooded_Grounds/Scenes/Scene_A.unity
+Assets/JungleSam/Scenes/Test/World.unity
+```
+
+`Flooded_Grounds` remains the target map base. Avoid using the old root paths such as `Assets/Scripts`, `Assets/Prefabs`, `Assets/Scenes`, `Assets/Models`, and `Assets/Flooded_Grounds`.
+
+---
+
+## MutantStalker Status - 2026-06-19
+
+MutantStalker is a gameplay enemy built from the imported MonsterMutant7 asset. Do not edit the original MonsterMutant7 Animator Controller.
+
+Work only in:
+
+```text
+Assets/JungleSam/Enemies/MutantStalker/
+```
+
+Important files:
+
+```text
+Assets/JungleSam/Enemies/MutantStalker/Scripts/MutantStalkerAI.cs
+Assets/JungleSam/Enemies/MutantStalker/Scripts/MutantStalkerAnimator.cs
+Assets/JungleSam/Enemies/MutantStalker/Editor/MutantStalkerAnimatorControllerBuilder.cs
+Assets/JungleSam/Enemies/MutantStalker/Animators/AC_MutantStalker_Gameplay.controller
+```
+
+Animator builder menu:
+
+```text
+Tools > Jungle Sam > Enemies > Build Mutant Stalker Animator Controller
+```
+
+Inspector values for current action locks:
+
+```text
+Attack Animation Lock: 1.1
+Hit Reaction Lock: 0.28
+Hit Reaction Cooldown: 0.35
+Rage Animation Lock: 1.2
+```
+
+Damage flow:
+- `Assets/JungleSam/Scripts/Combat/IDamageable.cs` was added.
+- `MutantStalkerAI` implements `IDamageable`.
+- `WeaponBase` checks `IDamageable` first, then falls back to the old `EnemyAI` damage path.
+
+Unity verification:
+- Let Unity compile and reimport after folder moves.
+- Check Console for missing scripts and missing references.
+- Open `Assets/ThirdParty/Flooded_Grounds/Scenes/Scene_A.unity`.
+- Test shooting old zombie `EnemyAI` and new `MutantStalkerAI`.
+- Test MutantStalker chase, attack, hit reaction, rage and death.
 
 
 

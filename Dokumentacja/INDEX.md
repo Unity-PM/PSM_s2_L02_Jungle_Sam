@@ -313,3 +313,46 @@ Version: 2.0 (Complete)
 Status: Ready for Team Handoff
 Last Modified: 2025
 ```
+
+# Update 2026-06-19 - Current Context
+
+Read first for the newest state:
+
+```text
+Dokumentacja/UPDATE_2026_06_19.md
+AI_CODEX/AGENTS.md
+AI_CODEX/PROJECT_STATUS.md
+AI_CODEX/CODEX_TASKS.md
+```
+
+Current paths changed after cleanup:
+
+```text
+Assets/JungleSam/Scripts/
+Assets/JungleSam/Prefabs/
+Assets/JungleSam/Scenes/Test/
+Assets/JungleSam/Enemies/MutantStalker/
+Assets/ThirdParty/Flooded_Grounds/
+Assets/ThirdParty/Models/
+```
+
+Old root paths like `Assets/Scripts`, `Assets/Prefabs`, `Assets/Scenes`, `Assets/Models`, and `Assets/Flooded_Grounds` are obsolete.
+
+Current target map:
+
+```text
+Assets/ThirdParty/Flooded_Grounds/Scenes/Scene_A.unity
+```
+
+MutantStalker gameplay files:
+
+```text
+Assets/JungleSam/Enemies/MutantStalker/Scripts/MutantStalkerAI.cs
+Assets/JungleSam/Enemies/MutantStalker/Scripts/MutantStalkerAnimator.cs
+Assets/JungleSam/Enemies/MutantStalker/Editor/MutantStalkerAnimatorControllerBuilder.cs
+Assets/JungleSam/Enemies/MutantStalker/Animators/AC_MutantStalker_Gameplay.controller
+```
+
+Do not edit the original MonsterMutant7 Animator Controller.
+
+---

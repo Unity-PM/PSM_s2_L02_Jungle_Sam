@@ -361,3 +361,54 @@ Extensibility: High (easy to add features)
 Documentation: Comprehensive (30+ pages)
 Next Milestone: Phase 1 Polish (Blend Tree)
 ```
+
+# Update 2026-06-19
+
+Project structure was reorganized:
+
+```text
+Assets/JungleSam/     - first-party gameplay code, prefabs, scenes, UI, settings
+Assets/ThirdParty/    - Flooded Grounds and imported model packs
+```
+
+Current Build Settings:
+
+```text
+Assets/ThirdParty/Flooded_Grounds/Scenes/Scene_A.unity
+Assets/JungleSam/Scenes/Test/World.unity
+```
+
+Added MutantStalker gameplay enemy:
+
+```text
+Assets/JungleSam/Enemies/MutantStalker/Scripts/MutantStalkerAI.cs
+Assets/JungleSam/Enemies/MutantStalker/Scripts/MutantStalkerAnimator.cs
+Assets/JungleSam/Enemies/MutantStalker/Editor/MutantStalkerAnimatorControllerBuilder.cs
+Assets/JungleSam/Enemies/MutantStalker/Animators/AC_MutantStalker_Gameplay.controller
+```
+
+Added shared damage interface:
+
+```text
+Assets/JungleSam/Scripts/Combat/IDamageable.cs
+```
+
+`WeaponBase` now damages `IDamageable` first and keeps fallback support for old `EnemyAI`.
+
+MutantStalker action locks were added to prevent NavMeshAgent movement from sliding the model during attack, hit reaction and rage:
+
+```text
+Attack Animation Lock: 1.1
+Hit Reaction Lock: 0.28
+Hit Reaction Cooldown: 0.35
+Rage Animation Lock: 1.2
+```
+
+Next verification in Unity:
+- Reimport and check Console.
+- Open `Scene_A`.
+- Confirm prefab references after folder moves.
+- Test zombie damage and MutantStalker damage.
+- Test MutantStalker chase, attack, hit reaction, rage and death.
+
+---

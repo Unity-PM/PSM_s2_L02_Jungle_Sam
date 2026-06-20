@@ -235,3 +235,56 @@ private Queue<GameObject> _muzzleFlashPool;
 
 **Last update:** 2025  
 **Prepared for:** Continuation & Team reference
+
+# Update 2026-06-19 - Quick Current Paths
+
+Newest daily context:
+
+```text
+Dokumentacja/UPDATE_2026_06_19.md
+```
+
+Main code is now under:
+
+```text
+Assets/JungleSam/Scripts/
+```
+
+Third-party content is now under:
+
+```text
+Assets/ThirdParty/
+```
+
+Target map:
+
+```text
+Assets/ThirdParty/Flooded_Grounds/Scenes/Scene_A.unity
+```
+
+MutantStalker:
+
+```text
+Assets/JungleSam/Enemies/MutantStalker/
+```
+
+Animator builder:
+
+```text
+Tools > Jungle Sam > Enemies > Build Mutant Stalker Animator Controller
+```
+
+MutantStalker Inspector action lock values:
+
+```text
+Attack Animation Lock: 1.1
+Hit Reaction Lock: 0.28
+Hit Reaction Cooldown: 0.35
+Rage Animation Lock: 1.2
+```
+
+Damage note:
+- `WeaponBase` now checks `IDamageable` first.
+- Old zombie `EnemyAI` damage still works as fallback.
+
+---

@@ -1,0 +1,170 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &100000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 400000}
+  - component: {fileID: 650000}
+  - component: {fileID: 11400000}
+  - component: {fileID: 11400001}
+  - component: {fileID: 11400002}
+  - component: {fileID: 11400003}
+  m_Layer: 0
+  m_Name: PF_GromDivision_FieldRadio
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &400000
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &650000
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.1, y: 1.35, z: 0.7}
+  m_Center: {x: 0, y: 0.52, z: 0}
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10d76817862b7bd4381c4bdbd1de6f97, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pickupId: StoryPickup_GromRadio
+  displayName: Radio Grom Division
+  interactionPrompt: E - Podnieś radio
+  destroyAfterPickup: 1
+  visualRoot: {fileID: 100000}
+  onPickedUp:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 11400002}
+        m_TargetAssemblyTypeName: ArenaStartOnStoryPickup, Assembly-CSharp
+        m_MethodName: StartArenaFromStoryPickup
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 11400003}
+        m_TargetAssemblyTypeName: ObjectiveOnStoryPickup, Assembly-CSharp
+        m_MethodName: UpdateObjective
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  requirePlayerTag: 1
+  playerTag: Player
+  promptRoot: {fileID: 0}
+  promptText: {fileID: 0}
+  interactionPromptUI: {fileID: 0}
+  hud: {fileID: 0}
+  autoFindHud: 1
+  interactionKey: E
+  interactionText: Podnieś radio
+  pickupNotification: RADIO GROM DIVISION ZABEZPIECZONE
+--- !u!114 &11400001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e1b6bcd2e264ec1a9cb94d0495fd921, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  visualScale: 1
+  bodyColor: {r: 0.2, g: 0.25, b: 0.16, a: 1}
+  rubberColor: {r: 0.015, g: 0.014, b: 0.012, a: 1}
+  metalColor: {r: 0.1, g: 0.095, b: 0.08, a: 1}
+  screenEmissionColor: {r: 0.42, g: 0.9, b: 0.5, a: 1}
+  screenEmissionIntensity: 1.8
+  ledEmissionColor: {r: 0.45, g: 1, b: 0.18, a: 1}
+  ledEmissionIntensity: 4.5
+  rebuildOnValidate: 1
+--- !u!114 &11400002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b26cae28234e9f4db6d49c76dbaf03f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  arenaEncounterController: {fileID: 0}
+  waveSpawner: {fileID: 0}
+  arenaController: {fileID: 0}
+  autoFindArenaById: 1
+  arenaId: Arena_DockStart
+  startMethodName: StartArena
+  startOnlyOnce: 1
+--- !u!114 &11400003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc15f9ae0c2222f47a383719037d9cc9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hud: {fileID: 0}
+  objectiveText: Przetrwaj atak zainfekowanych
+  secondaryObjectiveText: Utrzymaj pozycję przy nabrzeżu
+  showNotification: 1
+  updateOnlyOnce: 1
