@@ -9,12 +9,12 @@ public static class HUDSpriteImportUtility
     [MenuItem("JungleSam/HUD/Apply HUD Sprite Import Settings")]
     public static void ApplyImportSettings()
     {
-        ConfigureSingle("UI_Panel_Background.png", new Vector4(80f, 80f, 80f, 80f));
-        ConfigureSingle("UI_Panel_Frame.png", new Vector4(70f, 70f, 70f, 70f));
-        ConfigureSingle("UI_Button_Dark.png", new Vector4(90f, 40f, 90f, 40f));
-        ConfigureSingle("UI_Button_Selected.png", new Vector4(90f, 40f, 90f, 40f));
+        ConfigureSheet("UI_Panel_Background.png");
+        ConfigureSheet("UI_Panel_Frame.png");
+        ConfigureSheet("UI_Button_Dark.png");
+        ConfigureSheet("UI_Button_Selected.png");
         ConfigureSingle("UI_Crosshair.png", Vector4.zero);
-        ConfigureSingle("UI_Overlay_Scanlines.png", Vector4.zero);
+        ConfigureSheet("UI_Overlay_Scanlines.png");
         ConfigureSingle("UI_FieldRadio_Story.png", Vector4.zero);
 
         ConfigureSheet("UI_Icons_Combat_Sheet.png");

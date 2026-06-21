@@ -14,9 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   popupId: POPUP_GromRadio
   itemImage: {fileID: 0}
-  categoryLabel: DOWÓD / ŁUP FABULARNY
+  categoryLabel: "DOW\xD3D / \u0141UP FABULARNY"
   title: RADIO GROM DIVISION
-  subtitle: Kanał awaryjny CH-07
-  body: Odebrano urwany sygnał awaryjny. Jednostka Grom Division zgłasza utratę kontaktu z personelem Black Orchid. W pobliżu nabrzeża wykryto ruch zainfekowanych. Przygotuj się na kontakt.
+  subtitle: "Kana\u0142 awaryjny CH-07"
+  body: "Odebrano urwany sygna\u0142 awaryjny. Jednostka Grom Division zg\u0142asza
+    utrat\u0119 kontaktu z personelem Black Orchid. W pobli\u017Cu nabrze\u017Ca
+    wykryto ruch zainfekowanych. Przygotuj si\u0119 na kontakt."
   continueButtonText: KONTYNUUJ
   lockPlayerWhileOpen: 1

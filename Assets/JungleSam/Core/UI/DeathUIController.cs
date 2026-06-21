@@ -1,41 +1,34 @@
 using System;
-using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
+[DisallowMultipleComponent]
 public class DeathUIController : MonoBehaviour
 {
-    [Header("Root")]
+    [Header("Death Panel")]
     [FormerlySerializedAs("deathPanel")]
     [SerializeField] private GameObject root;
     [SerializeField] private CanvasGroup canvasGroup;
-
-    [Header("Text")]
-    [SerializeField] private TMP_Text titleText;
-    [SerializeField] private TMP_Text subtitleText;
-    [SerializeField] private TMP_Text bodyText;
-    [SerializeField] private TMP_Text respawnButtonText;
-    [SerializeField] private TMP_Text exitButtonText;
-
-    [Header("Buttons")]
     [SerializeField] private Button respawnButton;
     [SerializeField] private Button exitButton;
 
-    [Header("Defaults")]
-    [SerializeField] private string defaultTitle = "ELIMINACJA";
-    [SerializeField] private string defaultSubtitle = "Utracono łączność bojową";
-    [TextArea(2, 5)]
-    [SerializeField] private string defaultBody = "Ostatni checkpoint zostanie przywrócony. Utrzymaj pozycję i kontynuuj operację.";
-    [SerializeField] private string defaultRespawnButtonText = "POWRÓT DO CHECKPOINTU";
-    [SerializeField] private string defaultExitButtonText = "WYJDŹ DO MENU";
-
-    [Header("Legacy Fallback")]
-    [SerializeField] private string respawningText = "Respawning...";
-    [SerializeField] private TMP_Text tmpText;
-    [SerializeField] private Text legacyText;
+    [Header("Input")]
+    [SerializeField] private bool manageCursorWhileOpen = true;
 
     private Action _respawnCallback;
+    private bool _isOpen;
+    private bool _previousCursorVisible;
+    private CursorLockMode _previousCursorLockMode;
+
+    public bool CanUseRespawnButton
+    {
+        get
+        {
+            AutoWire();
+            return respawnButton != null;
+        }
+    }
 
     private void Reset()
     {
@@ -68,21 +61,15 @@ public class DeathUIController : MonoBehaviour
     [ContextMenu("Auto Wire")]
     public void AutoWire()
     {
-        root ??= gameObject;
+        if (root == null)
+        {
+            Transform deathRootTransform = transform.Find("DeathRoot");
+            root = deathRootTransform != null ? deathRootTransform.gameObject : gameObject;
+        }
+
         canvasGroup ??= GetComponent<CanvasGroup>();
-        titleText ??= FindText("TitleText");
-        subtitleText ??= FindText("SubtitleText");
-        bodyText ??= FindText("BodyText");
-        respawnButtonText ??= FindText("RespawnButtonText");
-        exitButtonText ??= FindText("ExitButtonText");
         respawnButton ??= FindButton("RespawnButton");
         exitButton ??= FindButton("ExitButton");
-
-        if (tmpText == null)
-            tmpText = GetComponentInChildren<TMP_Text>(true);
-
-        if (legacyText == null)
-            legacyText = GetComponentInChildren<Text>(true);
 
         if (canvasGroup == null)
             canvasGroup = gameObject.AddComponent<CanvasGroup>();
@@ -92,33 +79,22 @@ public class DeathUIController : MonoBehaviour
     {
         AutoWire();
 
-        if (titleText != null)
-            titleText.text = defaultTitle;
-
-        if (subtitleText != null)
-            subtitleText.text = defaultSubtitle;
-
-        if (bodyText != null)
-            bodyText.text = defaultBody;
-
-        if (respawnButtonText != null)
-            respawnButtonText.text = defaultRespawnButtonText;
-
-        if (exitButtonText != null)
-            exitButtonText.text = defaultExitButtonText;
-
         if (root != null)
             root.SetActive(true);
 
-        if (canvasGroup != null)
+        canvasGroup.alpha = 1f;
+        canvasGroup.interactable = true;
+        canvasGroup.blocksRaycasts = true;
+
+        if (manageCursorWhileOpen)
         {
-            canvasGroup.alpha = 1f;
-            canvasGroup.interactable = true;
-            canvasGroup.blocksRaycasts = true;
+            _previousCursorVisible = Cursor.visible;
+            _previousCursorLockMode = Cursor.lockState;
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
         }
 
-        if (titleText == null && subtitleText == null && bodyText == null)
-            SetText(respawningText);
+        _isOpen = true;
     }
 
     public void Hide()
@@ -132,6 +108,14 @@ public class DeathUIController : MonoBehaviour
 
         if (root != null)
             root.SetActive(false);
+
+        if (manageCursorWhileOpen && _isOpen)
+        {
+            Cursor.visible = _previousCursorVisible;
+            Cursor.lockState = _previousCursorLockMode;
+        }
+
+        _isOpen = false;
     }
 
     public void SetRespawnCallback(Action callback)
@@ -142,28 +126,6 @@ public class DeathUIController : MonoBehaviour
     private void HandleRespawnClicked()
     {
         _respawnCallback?.Invoke();
-    }
-
-    private void SetText(string value)
-    {
-        if (tmpText != null)
-            tmpText.text = value;
-
-        if (legacyText != null)
-            legacyText.text = value;
-    }
-
-    private TMP_Text FindText(string childName)
-    {
-        TMP_Text[] texts = GetComponentsInChildren<TMP_Text>(true);
-
-        foreach (TMP_Text text in texts)
-        {
-            if (text != null && text.name == childName)
-                return text;
-        }
-
-        return null;
     }
 
     private Button FindButton(string childName)

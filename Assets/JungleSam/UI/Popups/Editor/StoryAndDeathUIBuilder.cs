@@ -15,7 +15,6 @@ public static class StoryAndDeathUIBuilder
     public static void BuildAll()
     {
         EnsureFolders();
-        ConfigureTextureImportSettings();
         CreateStoryPopupDataAssets();
         CreateStoryPopupPrefab();
         CreateDeathPanelPrefab();
@@ -40,28 +39,6 @@ public static class StoryAndDeathUIBuilder
 
         if (!AssetDatabase.IsValidFolder(path))
             AssetDatabase.CreateFolder(parent, child);
-    }
-
-    private static void ConfigureTextureImportSettings()
-    {
-        string[] textureGuids = AssetDatabase.FindAssets("t:Texture2D", new[] { ArtFolder });
-
-        foreach (string guid in textureGuids)
-        {
-            string path = AssetDatabase.GUIDToAssetPath(guid);
-            TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
-
-            if (importer == null)
-                continue;
-
-            importer.textureType = TextureImporterType.Sprite;
-            importer.spriteImportMode = SpriteImportMode.Single;
-            importer.alphaIsTransparency = true;
-            importer.textureCompression = TextureImporterCompression.Uncompressed;
-            importer.filterMode = FilterMode.Bilinear;
-            importer.maxTextureSize = 4096;
-            importer.SaveAndReimport();
-        }
     }
 
     private static void CreateStoryPopupDataAssets()
@@ -147,7 +124,7 @@ public static class StoryAndDeathUIBuilder
         Anchor(subtitle.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(545f, -220f), new Vector2(650f, 42f));
 
         TMP_Text body = CreateText("BodyText", popupRoot.transform, string.Empty, 25, TextAlignmentOptions.TopLeft, new Color32(224, 228, 206, 255));
-        body.enableWordWrapping = true;
+        body.textWrappingMode = TextWrappingModes.Normal;
         Anchor(body.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(545f, -420f), new Vector2(650f, 310f));
 
         GameObject continueButtonObject = CreateButton("ContinueButton", popupRoot.transform, buttonDarkSprite, buttonSelectedSprite);
@@ -204,7 +181,7 @@ public static class StoryAndDeathUIBuilder
         Anchor(subtitle.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -170f), new Vector2(760f, 45f));
 
         TMP_Text body = CreateText("BodyText", deathRoot.transform, "Ostatni checkpoint zostanie przywrócony. Utrzymaj pozycję i kontynuuj operację.", 25, TextAlignmentOptions.Center, new Color32(226, 220, 204, 255));
-        body.enableWordWrapping = true;
+        body.textWrappingMode = TextWrappingModes.Normal;
         Anchor(body.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -270f), new Vector2(700f, 110f));
 
         GameObject respawnButtonObject = CreateButton("RespawnButton", deathRoot.transform, buttonDarkSprite, buttonSelectedSprite);

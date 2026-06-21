@@ -14,9 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   popupId: POPUP_ChurchMilitaryDocument
   itemImage: {fileID: 0}
-  categoryLabel: DOWÓD / ŁUP FABULARNY
+  categoryLabel: "DOW\xD3D / \u0141UP FABULARNY"
   title: DOKUMENT GROM DIVISION
-  subtitle: Raport terenowy // Sektor kościoła
-  body: "Zabezpieczono fragment raportu Grom Division.\n\nBlack Orchid przeniosła część materiału biologicznego do zabudowań obok kościoła. Oddział zabezpieczający zgłaszał wzrost agresji zainfekowanych w rejonie cmentarza.\n\nOstatni wpis:\n„Nie otwierać domu bez wsparcia. Sygnał nad strefą wpływa na mutanty.”"
+  subtitle: "Raport terenowy // Sektor ko\u015Bcio\u0142a"
+  body: "Zabezpieczono fragment raportu Grom Division.\n\nBlack Orchid przenios\u0142a
+    cz\u0119\u015B\u0107 materia\u0142u biologicznego do zabudowa\u0144 obok ko\u015Bcio\u0142a.
+    Oddzia\u0142 zabezpieczaj\u0105cy zg\u0142asza\u0142 wzrost agresji zainfekowanych
+    w rejonie cmentarza.\n\nOstatni wpis:\n\u201ENie otwiera\u0107 domu bez wsparcia.
+    Sygna\u0142 nad stref\u0105 wp\u0142ywa na mutanty.\u201D"
   continueButtonText: KONTYNUUJ
   lockPlayerWhileOpen: 1

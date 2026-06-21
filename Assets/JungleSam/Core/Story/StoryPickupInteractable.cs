@@ -1,4 +1,3 @@
-using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
@@ -10,40 +9,26 @@ public class StoryPickupInteractable : MonoBehaviour, IEncounterResettable
     [Header("Pickup")]
     [SerializeField] private string pickupId = "StoryPickup_GromRadio";
     [SerializeField] private string displayName = "Radio Grom Division";
-    [SerializeField] private string interactionPrompt = "E - Podnieś radio";
-    [SerializeField] private bool destroyAfterPickup = true;
+    [SerializeField] private bool hideVisualAfterPickup = true;
     [SerializeField] private GameObject visualRoot;
     [SerializeField] private UnityEvent onPickedUp;
 
-    [Header("Player Filter")]
+    [Header("Player")]
     [SerializeField] private bool requirePlayerTag = true;
     [SerializeField] private string playerTag = "Player";
 
-    [Header("Optional Prompt UI")]
-    [SerializeField] private GameObject promptRoot;
-    [SerializeField] private TMP_Text promptText;
-    [SerializeField] private InteractionPromptUI interactionPromptUI;
-    [SerializeField] private GameplayHUDController hud;
-    [SerializeField] private bool autoFindHud = true;
+    [Header("Interaction")]
     [SerializeField] private string interactionKey = "E";
     [SerializeField] private string interactionText = "Podnieś radio";
     [SerializeField] private string pickupNotification = "RADIO GROM DIVISION ZABEZPIECZONE";
 
-    [Header("Optional Story Popup")]
+    [Header("Story Popup")]
     [SerializeField] private bool showStoryPopupBeforeEvents = false;
-    [SerializeField] private StoryPopupData storyPopupData;
     [SerializeField] private StoryItemPopupUI storyPopupUI;
-    [SerializeField] private string popupTitle = "DOKUMENT GROM DIVISION";
-    [SerializeField] private string popupSubtitle = "Raport terenowy // Sektor kościoła";
-    [TextArea(4, 10)]
-    [SerializeField] private string popupBody = "Zabezpieczono fragment raportu Grom Division.\n\nBlack Orchid przeniosła część materiału biologicznego do zabudowań obok kościoła.\nOddział zabezpieczający zgłaszał wzrost agresji zainfekowanych w rejonie cmentarza.\n\nOstatni wpis:\n«Nie otwierać domu bez wsparcia. Sygnał nad strefą wpływa na mutanty.»";
-    [SerializeField] private string popupButtonText = "KONTYNUUJ";
 
     [Header("Death Reset")]
-    [SerializeField] private EncounterResetService encounterResetService;
     [SerializeField] private bool registerWithEncounterResetService = true;
     [SerializeField] private bool resetOnEncounterReset = true;
-    [SerializeField] private ArenaEncounterController linkedArena;
     [SerializeField] private string linkedArenaId = "Arena_DockStart";
 
     private bool _playerInRange;
@@ -51,6 +36,10 @@ public class StoryPickupInteractable : MonoBehaviour, IEncounterResettable
     private bool _promptLogged;
     private Collider _triggerCollider;
     private Renderer[] _visualRenderers;
+    private GameplayHUDController _hud;
+    private InteractionPromptUI _interactionPromptUI;
+    private EncounterResetService _encounterResetService;
+    private ArenaEncounterController _linkedArena;
 
     public string PickupId => pickupId;
     public string DisplayName => displayName;
@@ -60,9 +49,7 @@ public class StoryPickupInteractable : MonoBehaviour, IEncounterResettable
     {
         _triggerCollider = GetComponent<Collider>();
         _triggerCollider.isTrigger = true;
-
-        if (visualRoot == null)
-            visualRoot = gameObject;
+        visualRoot ??= gameObject;
     }
 
     private void Awake()
@@ -72,29 +59,24 @@ public class StoryPickupInteractable : MonoBehaviour, IEncounterResettable
         if (_triggerCollider != null && !_triggerCollider.isTrigger)
             _triggerCollider.isTrigger = true;
 
-        if (visualRoot == null)
-            visualRoot = gameObject;
-
+        visualRoot ??= gameObject;
         CacheVisualRenderers();
-        ResolveHUD();
-        ResolveStoryPopup();
-        ResolveEncounterResetService();
-        ResolveLinkedArena();
+        ResolveReferences();
         HidePrompt();
     }
 
     private void OnEnable()
     {
-        ResolveEncounterResetService();
+        ResolveReferences();
 
-        if (registerWithEncounterResetService && encounterResetService != null)
-            encounterResetService.RegisterEncounter(this);
+        if (registerWithEncounterResetService && _encounterResetService != null)
+            _encounterResetService.RegisterEncounter(this);
     }
 
     private void OnDisable()
     {
-        if (encounterResetService != null)
-            encounterResetService.UnregisterEncounter(this);
+        if (_encounterResetService != null)
+            _encounterResetService.UnregisterEncounter(this);
     }
 
     private void Update()
@@ -138,9 +120,6 @@ public class StoryPickupInteractable : MonoBehaviour, IEncounterResettable
         _playerInRange = false;
         HidePrompt();
 
-        if (destroyAfterPickup || visualRoot != null)
-            SetVisualVisible(false);
-
         if (_triggerCollider != null)
             _triggerCollider.enabled = false;
 
@@ -148,28 +127,13 @@ public class StoryPickupInteractable : MonoBehaviour, IEncounterResettable
         {
             ResolveStoryPopup();
 
-            if (storyPopupData != null)
-            {
-                if (UIManager.Instance != null)
-                {
-                    UIManager.Instance.ShowStoryPopup(storyPopupData, CompletePickup);
-                    return;
-                }
-
-                if (storyPopupUI != null)
-                {
-                    storyPopupUI.Show(storyPopupData, CompletePickup);
-                    return;
-                }
-            }
-
             if (storyPopupUI != null)
             {
-                storyPopupUI.Show(popupTitle, popupSubtitle, popupBody, popupButtonText, CompletePickup);
+                storyPopupUI.Show(CompletePickup);
                 return;
             }
 
-            Debug.LogWarning($"[{name}] Story popup requested for pickup '{pickupId}', but StoryItemPopupUI was not found. Continuing pickup events.");
+            Debug.LogWarning($"[{name}] Story popup requested for pickup '{pickupId}', but StoryItemPopupUI was not found. Continuing pickup events.", this);
         }
 
         CompletePickup();
@@ -188,7 +152,7 @@ public class StoryPickupInteractable : MonoBehaviour, IEncounterResettable
 
         ResolveLinkedArena();
 
-        if (linkedArena != null && linkedArena.IsCompleted)
+        if (_linkedArena != null && _linkedArena.IsCompleted)
             return;
 
         ForceResetPickup();
@@ -197,10 +161,22 @@ public class StoryPickupInteractable : MonoBehaviour, IEncounterResettable
 
     private void CompletePickup()
     {
-        onPickedUp?.Invoke();
+        try
+        {
+            onPickedUp?.Invoke();
+        }
+        catch (MissingReferenceException exception)
+        {
+            Debug.LogError($"[{name}] Pickup '{pickupId}' has an On Picked Up listener pointing to a destroyed object. Reassign the event target in Inspector. {exception.Message}", this);
+        }
 
-        if (hud != null && !string.IsNullOrWhiteSpace(pickupNotification))
-            hud.ShowNotification(pickupNotification, 2.5f);
+        ResolveHUD();
+
+        if (_hud != null && !string.IsNullOrWhiteSpace(pickupNotification))
+            _hud.ShowNotification(pickupNotification, 2.5f);
+
+        if (hideVisualAfterPickup)
+            SetVisualVisible(false);
 
         Debug.Log($"Story pickup collected: {pickupId} ({displayName})");
     }
@@ -227,72 +203,65 @@ public class StoryPickupInteractable : MonoBehaviour, IEncounterResettable
         if (other == null)
             return false;
 
-        if (!requirePlayerTag)
-            return true;
-
-        return other.CompareTag(playerTag);
+        return !requirePlayerTag || other.CompareTag(playerTag);
     }
 
     private void ShowPrompt()
     {
         ResolveHUD();
 
-        if (hud != null)
+        if (_hud != null)
         {
-            hud.ShowInteractionPrompt(interactionKey, interactionText);
+            _hud.ShowInteractionPrompt(interactionKey, interactionText);
             return;
         }
 
-        if (interactionPromptUI != null)
+        if (_interactionPromptUI != null)
         {
-            interactionPromptUI.Show(interactionKey, interactionText);
-            return;
-        }
-
-        if (promptText != null)
-            promptText.text = interactionPrompt;
-
-        if (promptRoot != null)
-        {
-            promptRoot.SetActive(true);
+            _interactionPromptUI.Show(interactionKey, interactionText);
             return;
         }
 
         if (!_promptLogged)
         {
-            Debug.Log($"Interaction prompt: {interactionPrompt}");
+            Debug.Log($"Interaction prompt: [{interactionKey}] - {interactionText}");
             _promptLogged = true;
         }
     }
 
     private void HidePrompt()
     {
-        if (interactionPromptUI != null)
-            interactionPromptUI.Hide();
+        if (_interactionPromptUI != null)
+            _interactionPromptUI.Hide();
 
-        if (hud != null)
-            hud.HideInteractionPrompt();
+        if (_hud != null)
+            _hud.HideInteractionPrompt();
+    }
 
-        if (promptRoot != null)
-            promptRoot.SetActive(false);
+    private void ResolveReferences()
+    {
+        ResolveHUD();
+        ResolveStoryPopup();
+
+        if (_encounterResetService == null)
+            _encounterResetService = FindFirstObjectByType<EncounterResetService>();
+
+        ResolveLinkedArena();
     }
 
     private void ResolveHUD()
     {
-        if (!autoFindHud)
-            return;
+        if (_hud == null)
+            _hud = GameplayHUDController.Instance;
 
-        if (hud == null)
-            hud = GameplayHUDController.Instance;
+        if (_hud == null)
+            _hud = FindHUDInScene();
 
-        if (hud == null)
-            hud = FindHUDInScene();
+        if (_interactionPromptUI == null && _hud != null)
+            _interactionPromptUI = _hud.GetComponentInChildren<InteractionPromptUI>(true);
 
-        if (interactionPromptUI == null && hud != null)
-            interactionPromptUI = hud.GetComponentInChildren<InteractionPromptUI>(true);
-
-        if (interactionPromptUI == null && hud == null)
-            interactionPromptUI = FindPromptInScene();
+        if (_interactionPromptUI == null && _hud == null)
+            _interactionPromptUI = FindPromptInScene();
     }
 
     private void ResolveStoryPopup()
@@ -301,15 +270,9 @@ public class StoryPickupInteractable : MonoBehaviour, IEncounterResettable
             storyPopupUI = FindFirstObjectByType<StoryItemPopupUI>(FindObjectsInactive.Include);
     }
 
-    private void ResolveEncounterResetService()
-    {
-        if (encounterResetService == null)
-            encounterResetService = FindFirstObjectByType<EncounterResetService>();
-    }
-
     private void ResolveLinkedArena()
     {
-        if (linkedArena != null || string.IsNullOrWhiteSpace(linkedArenaId))
+        if (_linkedArena != null || string.IsNullOrWhiteSpace(linkedArenaId))
             return;
 
         ArenaEncounterController[] arenas = FindObjectsByType<ArenaEncounterController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
@@ -318,7 +281,7 @@ public class StoryPickupInteractable : MonoBehaviour, IEncounterResettable
         {
             if (arena != null && arena.ArenaId == linkedArenaId)
             {
-                linkedArena = arena;
+                _linkedArena = arena;
                 return;
             }
         }

@@ -65,7 +65,12 @@ public class PlayerDeathHandler : MonoBehaviour
         if (encounterResetService != null)
             encounterResetService.ResetActiveEncounter();
 
-        if (waitForRespawnButton)
+        bool canWaitForRespawnButton = waitForRespawnButton && deathUIController != null && deathUIController.CanUseRespawnButton;
+
+        if (waitForRespawnButton && !canWaitForRespawnButton)
+            Debug.LogWarning("PlayerDeathHandler waits for respawn button, but DeathUIController or RespawnButton is missing. Falling back to automatic respawn delay.");
+
+        if (canWaitForRespawnButton)
         {
             while (!_respawnRequested)
                 yield return null;
@@ -117,7 +122,7 @@ public class PlayerDeathHandler : MonoBehaviour
             checkpointManager = FindFirstObjectByType<CheckpointManager>();
 
         if (deathUIController == null)
-            deathUIController = FindFirstObjectByType<DeathUIController>();
+            deathUIController = FindFirstObjectByType<DeathUIController>(FindObjectsInactive.Include);
 
         if (encounterResetService == null)
             encounterResetService = FindFirstObjectByType<EncounterResetService>();

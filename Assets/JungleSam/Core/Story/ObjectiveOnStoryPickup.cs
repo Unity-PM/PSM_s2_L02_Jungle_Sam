@@ -4,7 +4,6 @@ using UnityEngine;
 public class ObjectiveOnStoryPickup : MonoBehaviour, IEncounterResettable
 {
     [Header("Objective")]
-    [SerializeField] private GameplayHUDController hud;
     [SerializeField] private string objectiveText = "Przetrwaj atak zainfekowanych";
     [SerializeField] private string secondaryObjectiveText = "Utrzymaj pozycję przy nabrzeżu";
     [SerializeField] private bool showNotification = true;
@@ -12,15 +11,16 @@ public class ObjectiveOnStoryPickup : MonoBehaviour, IEncounterResettable
     [SerializeField] private bool updateOnlyOnce = true;
 
     [Header("Death Reset")]
-    [SerializeField] private EncounterResetService encounterResetService;
     [SerializeField] private bool registerWithEncounterResetService = true;
     [SerializeField] private bool resetObjectiveOnEncounterReset = true;
     [SerializeField] private string resetObjectiveText = "Znajdź źródło sygnału";
     [SerializeField] private string resetSecondaryObjectiveText = "Przedostań się przez nabrzeże";
-    [SerializeField] private ArenaEncounterController linkedArena;
     [SerializeField] private string linkedArenaId = "Arena_DockStart";
 
     private bool _updated;
+    private GameplayHUDController _hud;
+    private EncounterResetService _encounterResetService;
+    private ArenaEncounterController _linkedArena;
 
     private void Awake()
     {
@@ -32,14 +32,14 @@ public class ObjectiveOnStoryPickup : MonoBehaviour, IEncounterResettable
     {
         ResolveEncounterResetService();
 
-        if (registerWithEncounterResetService && encounterResetService != null)
-            encounterResetService.RegisterEncounter(this);
+        if (registerWithEncounterResetService && _encounterResetService != null)
+            _encounterResetService.RegisterEncounter(this);
     }
 
     private void OnDisable()
     {
-        if (encounterResetService != null)
-            encounterResetService.UnregisterEncounter(this);
+        if (_encounterResetService != null)
+            _encounterResetService.UnregisterEncounter(this);
     }
 
     [ContextMenu("Update Objective")]
@@ -51,12 +51,12 @@ public class ObjectiveOnStoryPickup : MonoBehaviour, IEncounterResettable
         _updated = true;
         ResolveHUD();
 
-        if (hud != null)
+        if (_hud != null)
         {
-            hud.SetObjective(objectiveText, secondaryObjectiveText);
+            _hud.SetObjective(objectiveText, secondaryObjectiveText);
 
             if (showNotification)
-                hud.ShowNotification(notificationText);
+                _hud.ShowNotification(notificationText);
         }
 
         Debug.Log($"CEL ZAKTUALIZOWANY: {objectiveText}");
@@ -70,38 +70,38 @@ public class ObjectiveOnStoryPickup : MonoBehaviour, IEncounterResettable
         ResolveHUD();
         ResolveLinkedArena();
 
-        if (linkedArena != null && linkedArena.IsCompleted)
+        if (_linkedArena != null && _linkedArena.IsCompleted)
             return;
 
         _updated = false;
 
-        if (hud != null)
-            hud.SetObjective(resetObjectiveText, resetSecondaryObjectiveText);
+        if (_hud != null)
+            _hud.SetObjective(resetObjectiveText, resetSecondaryObjectiveText);
 
         Debug.Log($"CEL COFNIĘTY PO ŚMIERCI: {resetObjectiveText}");
     }
 
     private void ResolveHUD()
     {
-        if (hud == null)
-            hud = GameplayHUDController.Instance;
+        if (_hud == null)
+            _hud = GameplayHUDController.Instance;
 
-        if (hud == null)
+        if (_hud == null)
         {
             GameplayHUDController[] controllers = FindObjectsByType<GameplayHUDController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-            hud = controllers.Length > 0 ? controllers[0] : null;
+            _hud = controllers.Length > 0 ? controllers[0] : null;
         }
     }
 
     private void ResolveEncounterResetService()
     {
-        if (encounterResetService == null)
-            encounterResetService = FindFirstObjectByType<EncounterResetService>();
+        if (_encounterResetService == null)
+            _encounterResetService = FindFirstObjectByType<EncounterResetService>();
     }
 
     private void ResolveLinkedArena()
     {
-        if (linkedArena != null || string.IsNullOrWhiteSpace(linkedArenaId))
+        if (_linkedArena != null || string.IsNullOrWhiteSpace(linkedArenaId))
             return;
 
         ArenaEncounterController[] arenas = FindObjectsByType<ArenaEncounterController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
@@ -110,7 +110,7 @@ public class ObjectiveOnStoryPickup : MonoBehaviour, IEncounterResettable
         {
             if (arena != null && arena.ArenaId == linkedArenaId)
             {
-                linkedArena = arena;
+                _linkedArena = arena;
                 return;
             }
         }

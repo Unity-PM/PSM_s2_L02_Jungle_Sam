@@ -1,40 +1,28 @@
 using System;
-using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 public class StoryItemPopupUI : MonoBehaviour
 {
-    [Header("Root")]
+    [Header("Popup")]
     [SerializeField] private GameObject popupRoot;
     [SerializeField] private CanvasGroup canvasGroup;
-
-    [Header("Images")]
-    [SerializeField] private Image dimBackground;
-    [SerializeField] private Image panelBackground;
-    [SerializeField] private Image panelFrame;
-    [SerializeField] private Image itemImage;
-
-    [Header("Text")]
-    [SerializeField] private TMP_Text categoryLabelText;
-    [SerializeField] private TMP_Text titleText;
-    [SerializeField] private TMP_Text subtitleText;
-    [SerializeField] private TMP_Text bodyText;
-    [FormerlySerializedAs("buttonText")]
-    [SerializeField] private TMP_Text continueButtonText;
-
-    [Header("Controls")]
     [SerializeField] private Button continueButton;
 
-    [Header("Optional Control Lock")]
+    [Header("Input Lock")]
     [FormerlySerializedAs("playerControlLock")]
     [SerializeField] private PlayerControlLock optionalPlayerControlLock;
     [SerializeField] private bool lockPlayerWhileOpen = true;
+    [SerializeField] private bool manageCursorWhileOpen = true;
 
     private Action _onClosed;
+    private bool _isOpen;
     private bool _unlockPlayerOnClose;
+    private bool _previousCursorVisible;
+    private CursorLockMode _previousCursorLockMode;
 
     private void Awake()
     {
@@ -59,102 +47,90 @@ public class StoryItemPopupUI : MonoBehaviour
             continueButton.onClick.RemoveListener(Continue);
     }
 
+    private void Update()
+    {
+        if (!_isOpen)
+            return;
+
+        Keyboard keyboard = Keyboard.current;
+
+        if (keyboard != null &&
+            (keyboard.enterKey.wasPressedThisFrame ||
+             keyboard.numpadEnterKey.wasPressedThisFrame ||
+             keyboard.spaceKey.wasPressedThisFrame ||
+             keyboard.eKey.wasPressedThisFrame ||
+             keyboard.escapeKey.wasPressedThisFrame))
+        {
+            Continue();
+        }
+    }
+
     [ContextMenu("Auto Wire")]
     public void AutoWire()
     {
-        popupRoot ??= gameObject;
+        if (popupRoot == null)
+        {
+            Transform popupRootTransform = transform.Find("PopupRoot");
+            popupRoot = popupRootTransform != null ? popupRootTransform.gameObject : gameObject;
+        }
+
         canvasGroup ??= GetComponent<CanvasGroup>();
-        dimBackground ??= FindImage("DimBackground");
-        panelBackground ??= FindImage("PanelBackground");
-        panelFrame ??= FindImage("PanelFrame");
-        itemImage ??= FindImage("ItemImage");
-        categoryLabelText ??= FindText("CategoryLabelText");
-        titleText ??= FindText("TitleText");
-        subtitleText ??= FindText("SubtitleText");
-        bodyText ??= FindText("BodyText");
-        continueButtonText ??= FindText("ContinueButtonText");
-        continueButtonText ??= FindText("ButtonText");
         continueButton ??= GetComponentInChildren<Button>(true);
 
         if (canvasGroup == null)
             canvasGroup = gameObject.AddComponent<CanvasGroup>();
 
         if (optionalPlayerControlLock == null)
-            optionalPlayerControlLock = FindFirstObjectByType<PlayerControlLock>();
+            optionalPlayerControlLock = FindFirstObjectByType<PlayerControlLock>(FindObjectsInactive.Include);
     }
 
     public void Show(StoryPopupData data, Action onClosed)
     {
-        if (data == null)
-        {
-            Show("DOKUMENT", string.Empty, string.Empty, (Sprite)null, onClosed);
-            return;
-        }
-
-        ShowInternal(
-            data.CategoryLabel,
-            data.Title,
-            data.Subtitle,
-            data.Body,
-            data.ItemImage,
-            data.ContinueButtonText,
-            data.LockPlayerWhileOpen,
-            onClosed);
+        Show(onClosed);
     }
 
     public void Show(string title, string subtitle, string body, Sprite image, Action onClosed)
     {
-        ShowInternal(string.Empty, title, subtitle, body, image, "KONTYNUUJ", lockPlayerWhileOpen, onClosed);
+        Show(onClosed);
     }
 
     public void Show(string title, string subtitle, string body, string buttonLabel, Action onClosed)
     {
-        ShowInternal(string.Empty, title, subtitle, body, null, buttonLabel, lockPlayerWhileOpen, onClosed);
+        Show(onClosed);
     }
 
-    private void ShowInternal(string categoryLabel, string title, string subtitle, string body, Sprite image, string buttonLabel, bool lockPlayer, Action onClosed)
+    public void Show(Action onClosed)
     {
         AutoWire();
+
+        if (popupRoot == null)
+        {
+            Debug.LogWarning($"Story popup '{name}' has no Popup Root. Continuing without popup.", this);
+            onClosed?.Invoke();
+            return;
+        }
+
         _onClosed = onClosed;
-        _unlockPlayerOnClose = lockPlayer && optionalPlayerControlLock != null;
+        _unlockPlayerOnClose = lockPlayerWhileOpen && optionalPlayerControlLock != null;
 
-        if (categoryLabelText != null)
-        {
-            bool hasCategory = !string.IsNullOrWhiteSpace(categoryLabel);
-            categoryLabelText.gameObject.SetActive(hasCategory);
-            categoryLabelText.text = hasCategory ? categoryLabel : string.Empty;
-        }
+        popupRoot.SetActive(true);
 
-        if (titleText != null)
-            titleText.text = string.IsNullOrWhiteSpace(title) ? "DOKUMENT" : title;
-
-        if (subtitleText != null)
-            subtitleText.text = string.IsNullOrWhiteSpace(subtitle) ? string.Empty : subtitle;
-
-        if (bodyText != null)
-            bodyText.text = string.IsNullOrWhiteSpace(body) ? string.Empty : body;
-
-        if (continueButtonText != null)
-            continueButtonText.text = string.IsNullOrWhiteSpace(buttonLabel) ? "KONTYNUUJ" : buttonLabel;
-
-        if (itemImage != null)
-        {
-            itemImage.sprite = image;
-            itemImage.enabled = image != null;
-        }
-
-        if (popupRoot != null)
-            popupRoot.SetActive(true);
-
-        if (canvasGroup != null)
-        {
-            canvasGroup.alpha = 1f;
-            canvasGroup.interactable = true;
-            canvasGroup.blocksRaycasts = true;
-        }
+        canvasGroup.alpha = 1f;
+        canvasGroup.interactable = true;
+        canvasGroup.blocksRaycasts = true;
 
         if (_unlockPlayerOnClose)
             optionalPlayerControlLock.SetLocked(true);
+
+        if (manageCursorWhileOpen)
+        {
+            _previousCursorVisible = Cursor.visible;
+            _previousCursorLockMode = Cursor.lockState;
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+        }
+
+        _isOpen = true;
     }
 
     public void Hide()
@@ -177,51 +153,21 @@ public class StoryItemPopupUI : MonoBehaviour
         if (unlockPlayer && _unlockPlayerOnClose && optionalPlayerControlLock != null)
             optionalPlayerControlLock.SetLocked(false);
 
+        if (unlockPlayer && manageCursorWhileOpen && _isOpen)
+        {
+            Cursor.visible = _previousCursorVisible;
+            Cursor.lockState = _previousCursorLockMode;
+        }
+
+        _onClosed = null;
         _unlockPlayerOnClose = false;
+        _isOpen = false;
     }
 
     public void Continue()
     {
         Action callback = _onClosed;
-        _onClosed = null;
-
         Hide();
         callback?.Invoke();
-    }
-
-    private TMP_Text FindText(string childName)
-    {
-        Transform child = transform.Find(childName);
-
-        if (child != null)
-            return child.GetComponent<TMP_Text>();
-
-        TMP_Text[] texts = GetComponentsInChildren<TMP_Text>(true);
-
-        foreach (TMP_Text text in texts)
-        {
-            if (text != null && text.name == childName)
-                return text;
-        }
-
-        return null;
-    }
-
-    private Image FindImage(string childName)
-    {
-        Transform child = transform.Find(childName);
-
-        if (child != null)
-            return child.GetComponent<Image>();
-
-        Image[] images = GetComponentsInChildren<Image>(true);
-
-        foreach (Image image in images)
-        {
-            if (image != null && image.name == childName)
-                return image;
-        }
-
-        return null;
     }
 }

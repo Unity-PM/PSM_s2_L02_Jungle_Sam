@@ -9,14 +9,14 @@ public class ObjectiveTriggerZone : MonoBehaviour
     [SerializeField] private string requiredPlayerTag = "Player";
     [SerializeField] private bool activateOnce = true;
 
-    [Header("HUD")]
-    [SerializeField] private GameplayHUDController hud;
+    [Header("Objective")]
     [SerializeField] private string objectiveText = "Przeszukaj teren kościoła";
     [SerializeField] private string secondaryObjectiveText = "Znajdź ślady oddziału Grom Division";
     [SerializeField] private bool showNotification = true;
     [SerializeField] private string notificationText = "CEL ZAKTUALIZOWANY";
 
     private bool _activated;
+    private GameplayHUDController _hud;
 
     private void Reset()
     {
@@ -54,26 +54,25 @@ public class ObjectiveTriggerZone : MonoBehaviour
         _activated = true;
         ResolveHUD();
 
-        if (hud != null)
-        {
-            hud.SetObjective(objectiveText, secondaryObjectiveText);
-
-            if (showNotification)
-                hud.ShowNotification(notificationText);
-        }
-        else
+        if (_hud == null)
         {
             Debug.Log($"[{name}] Objective trigger '{triggerId}': {objectiveText} / {secondaryObjectiveText}");
+            return;
         }
+
+        _hud.SetObjective(objectiveText, secondaryObjectiveText);
+
+        if (showNotification)
+            _hud.ShowNotification(notificationText);
     }
 
     private void ResolveHUD()
     {
-        if (hud == null)
-            hud = GameplayHUDController.Instance;
+        if (_hud == null)
+            _hud = GameplayHUDController.Instance;
 
-        if (hud == null)
-            hud = FindFirstObjectByType<GameplayHUDController>();
+        if (_hud == null)
+            _hud = FindFirstObjectByType<GameplayHUDController>();
     }
 
     private void OnDrawGizmos()

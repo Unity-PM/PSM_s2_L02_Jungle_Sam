@@ -7,7 +7,6 @@ using UnityEngine.UI;
 using UnityEditor;
 #endif
 
-[ExecuteAlways]
 [DisallowMultipleComponent]
 public class GameplayHUDPrefabBuilder : MonoBehaviour
 {
@@ -40,30 +39,17 @@ public class GameplayHUDPrefabBuilder : MonoBehaviour
     [SerializeField] private Sprite combatCheckpointIconSprite;
 
     [Header("Automation")]
-    [SerializeField] private bool autoEnsureOnAwake = false;
-    [SerializeField] private bool rebuildOnValidate = false;
-
-    private void Awake()
-    {
-        if (autoEnsureOnAwake)
-            EnsureHUD();
-    }
-
-    private void OnEnable()
-    {
-        if (autoEnsureOnAwake)
-            EnsureHUD();
-    }
-
-    private void OnValidate()
-    {
-        if (rebuildOnValidate)
-            RebuildHUD();
-    }
+    [SerializeField] private bool allowDestructiveRebuild = false;
 
     [ContextMenu("Rebuild HUD")]
     public void RebuildHUD()
     {
+        if (!allowDestructiveRebuild)
+        {
+            Debug.LogWarning("Rebuild HUD is blocked. Enable Allow Destructive Rebuild only when you intentionally want to delete and recreate HUD children.");
+            return;
+        }
+
         AutoLoadSprites();
 
         Transform existing = transform.Find("SafeArea");
@@ -82,6 +68,12 @@ public class GameplayHUDPrefabBuilder : MonoBehaviour
     [ContextMenu("Apply HUD Art Sprites And Rebuild")]
     public void ApplyArtSpritesAndRebuild()
     {
+        if (!allowDestructiveRebuild)
+        {
+            Debug.LogWarning("Apply HUD Art Sprites And Rebuild is blocked. Enable Allow Destructive Rebuild only for intentional full HUD regeneration.");
+            return;
+        }
+
         panelBackgroundSprite = LoadSpriteOrCreateFallback("UI_Panel_Background.png", new Vector4(80f, 80f, 80f, 80f));
         panelFrameSprite = LoadSpriteOrCreateFallback("UI_Panel_Frame.png", new Vector4(70f, 70f, 70f, 70f));
         buttonDarkSprite = LoadSpriteOrCreateFallback("UI_Button_Dark.png", new Vector4(90f, 40f, 90f, 40f));
@@ -90,34 +82,6 @@ public class GameplayHUDPrefabBuilder : MonoBehaviour
         scanlinesSprite = LoadSpriteOrCreateFallback("UI_Overlay_Scanlines.png", Vector4.zero);
         LoadSlicedHUDSprites(true);
         RebuildHUD();
-    }
-
-    private void EnsureHUD()
-    {
-        EnsureCanvasComponents();
-        AutoLoadSprites();
-
-        if (transform.Find("SafeArea") == null || transform.Find("HUD_Overlay") == null)
-        {
-            Transform existingSafeArea = transform.Find("SafeArea");
-            Transform existingOverlay = transform.Find("HUD_Overlay");
-
-            if (existingSafeArea != null)
-                DestroyGeneratedObject(existingSafeArea.gameObject);
-
-            if (existingOverlay != null)
-                DestroyGeneratedObject(existingOverlay.gameObject);
-
-            BuildHUD();
-        }
-
-        // Do not auto-repair panel layers here. Artists may tweak panel colors/layers in the prefab,
-        // and EnsureHUD runs from ExecuteAlways when entering Play Mode.
-        GameplayHUDController controller = GetComponent<GameplayHUDController>();
-        if (controller != null)
-        {
-            controller.AutoWireFromChildren();
-        }
     }
 
     private void EnsureCanvasComponents()
@@ -557,6 +521,14 @@ public class GameplayHUDPrefabBuilder : MonoBehaviour
 
         if (sprite != null)
             return sprite;
+
+        Object[] objects = AssetDatabase.LoadAllAssetsAtPath(path);
+
+        foreach (Object obj in objects)
+        {
+            if (obj is Sprite subSprite)
+                return subSprite;
+        }
 
         Texture2D texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
 

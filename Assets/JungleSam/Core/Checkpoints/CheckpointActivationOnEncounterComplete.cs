@@ -6,7 +6,8 @@ public class CheckpointActivationOnEncounterComplete : MonoBehaviour
     [SerializeField] private CheckpointVolume checkpoint;
     [SerializeField] private bool showNotification = true;
     [SerializeField] private string notificationText = "CHECKPOINT AKTYWNY";
-    [SerializeField] private GameplayHUDController hud;
+
+    private GameplayHUDController _hud;
 
     [ContextMenu("Debug Activate Checkpoint")]
     public void ActivateCheckpoint()
@@ -17,25 +18,25 @@ public class CheckpointActivationOnEncounterComplete : MonoBehaviour
         if (checkpoint != null)
             checkpoint.ActivateCheckpoint();
         else
-            Debug.LogWarning($"[{name}] Cannot activate checkpoint: CheckpointVolume is not assigned.");
+            Debug.LogWarning($"[{name}] Cannot activate checkpoint: CheckpointVolume is not assigned.", this);
 
-        if (showNotification)
-        {
-            ResolveHUD();
+        if (!showNotification)
+            return;
 
-            if (hud != null)
-                hud.ShowNotification(notificationText);
-            else
-                Debug.Log($"HUD notification: {notificationText}");
-        }
+        ResolveHUD();
+
+        if (_hud != null)
+            _hud.ShowNotification(notificationText);
+        else
+            Debug.Log($"HUD notification: {notificationText}");
     }
 
     private void ResolveHUD()
     {
-        if (hud == null)
-            hud = GameplayHUDController.Instance;
+        if (_hud == null)
+            _hud = GameplayHUDController.Instance;
 
-        if (hud == null)
-            hud = FindFirstObjectByType<GameplayHUDController>();
+        if (_hud == null)
+            _hud = FindFirstObjectByType<GameplayHUDController>();
     }
 }
