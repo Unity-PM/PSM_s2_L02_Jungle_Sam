@@ -448,10 +448,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CrosshairUI
   crosshairColor: {r: 1, g: 1, b: 1, a: 1}
   overallScale: 1
-  lineLength: 16
+  lineLength: 12
   lineThickness: 2
-  gap: 8
-  centerDotSize: 2
+  gap: 6
+  centerDotSize: 1
   showCenterDot: 0
   top: {fileID: 0}
   bottom: {fileID: 0}
@@ -881,7 +881,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1481740162757900653}
   - component: {fileID: 1481740162770994733}
-  - component: {fileID: 1481740162770994732}
   - component: {fileID: 1481740162770994735}
   - component: {fileID: 1481740162770994734}
   - component: {fileID: 4676427041322594032}
@@ -942,35 +941,6 @@ MonoBehaviour:
   interactionPrompt: {fileID: 1764592172061222637}
   notification: {fileID: 4764409987083519981}
   applyDefaultValuesOnStart: 0
---- !u!114 &1481740162770994732
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1481740162777576397}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9c487c804d0a4b9eb092bd3ca5a3d006, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  panelBackgroundSprite: {fileID: 1068257903, guid: c62de2e8293c4334a941dea3aa30d738, type: 3}
-  panelFrameSprite: {fileID: 21300000, guid: 5127d130f4a54ca43b1b3aaa359de55d, type: 3}
-  buttonDarkSprite: {fileID: 696929963, guid: 14c8c115fe5553d49818fa420f37bcc2, type: 3}
-  buttonSelectedSprite: {fileID: -2078208163, guid: 5e9f0bb8a9a4d2d479ef4ba88e35e3a6, type: 3}
-  crosshairSprite: {fileID: 21300000, guid: 2da598397ca67454fa9f894fa2d151e9, type: 3}
-  scanlinesSprite: {fileID: 617847046, guid: cde58d430a8ee6e449bf595327bddfa3, type: 3}
-  barBackgroundSprite: {fileID: 1807415265, guid: e8a26098d2ce937468becb0747b4914c, type: 3}
-  healthFillSprite: {fileID: 1522709938, guid: e8a26098d2ce937468becb0747b4914c, type: 3}
-  armorFillSprite: {fileID: -748583107, guid: e8a26098d2ce937468becb0747b4914c, type: 3}
-  barFrameSprite: {fileID: -2069247333, guid: e8a26098d2ce937468becb0747b4914c, type: 3}
-  combatHpIconSprite: {fileID: 1553633471, guid: cdbad110162d8834aac7285315ce204d, type: 3}
-  combatArmorIconSprite: {fileID: 1307476173, guid: cdbad110162d8834aac7285315ce204d, type: 3}
-  combatAmmoIconSprite: {fileID: -1399180772, guid: cdbad110162d8834aac7285315ce204d, type: 3}
-  combatObjectiveIconSprite: {fileID: 1427379946, guid: cdbad110162d8834aac7285315ce204d, type: 3}
-  combatInteractionIconSprite: {fileID: -667182382, guid: cdbad110162d8834aac7285315ce204d, type: 3}
-  combatCheckpointIconSprite: {fileID: 1470708036, guid: cdbad110162d8834aac7285315ce204d, type: 3}
-  allowDestructiveRebuild: 0
 --- !u!114 &1481740162770994735
 MonoBehaviour:
   m_ObjectHideFlags: 0

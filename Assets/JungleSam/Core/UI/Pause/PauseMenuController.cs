@@ -35,6 +35,7 @@ public class PauseMenuController : MonoBehaviour
     private InputAction _boundPauseAction;
     private bool _boundPauseActionWasEnabled;
     private float _previousTimeScale = 1f;
+    private int _lastPauseToggleFrame = -1;
 
     public static bool IsPaused { get; private set; }
 
@@ -95,6 +96,14 @@ public class PauseMenuController : MonoBehaviour
 
         if (_isPaused)
             IsPaused = false;
+    }
+
+    private void Update()
+    {
+        Keyboard keyboard = Keyboard.current;
+
+        if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
+            TogglePauseFromInput();
     }
 
     [ContextMenu("Auto Wire")]
@@ -263,6 +272,15 @@ public class PauseMenuController : MonoBehaviour
 
     private void HandlePausePerformed(InputAction.CallbackContext context)
     {
+        TogglePauseFromInput();
+    }
+
+    private void TogglePauseFromInput()
+    {
+        if (_lastPauseToggleFrame == Time.frameCount)
+            return;
+
+        _lastPauseToggleFrame = Time.frameCount;
         TogglePause();
     }
 
