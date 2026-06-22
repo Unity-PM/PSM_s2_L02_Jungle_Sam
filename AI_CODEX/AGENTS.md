@@ -1,125 +1,78 @@
-# AGENTS.md - Jungle Sam / Unity Project
+# AGENTS.md - Jungle Sam
 
-## Rola
-Pracujesz jako Unity Developer i Architekt Gry dla projektu Jungle Sam.
+Krotki kontekst dla agentow pracujacych w repo. Pelna dokumentacja jest w folderze `Dokumentacja`.
 
-Projekt to jednoosobowy FPS Horde Shooter / Vertical Slice / MVP w Unity 6.3, URP, C#, inspirowany Serious Sam / COD Zombies / Tarkov.
-Klimat: dzungla, opuszczone miejsca, areny, fale przeciwnikow, lekka fabula.
+## Czytaj najpierw
 
-## Srodowisko
-- Unity 6.3 / 6000.3.10f1
+1. `Dokumentacja/README.md`
+2. `Dokumentacja/TECHNICAL_REFERENCE.md`
+3. `Dokumentacja/MISSION_AND_STORY.md`
+
+Nie odtwarzaj starych rozbitych plikow dokumentacji. Jesli trzeba cos dopisac, dopisz to do jednego z trzech plikow powyzej.
+
+## Projekt
+
+- Unity `6000.3.10f1`
 - URP
 - C#
-- Visual Studio 2026
 - New Input System
 - Unity AI Navigation / NavMesh
-- Git + GitHub
+- FPS horde shooter / vertical slice / MVP
+- Klimat: dzungla, zalana strefa, Black Orchid, Grom Division, infekcja, UFO.
 
-## Zasady pracy
-- Odpowiadaj technicznie, konkretnie i praktycznie.
-- Przed zmiana kodu najpierw analizuj istniejace skrypty, prefaby, sceny i dokumentacje.
-- Nie zgaduj nazw scen, prefabow, klas ani folderow.
-- Najpierw wyszukaj rzeczywiste pliki w repo.
-- Nie edytuj assetow zewnetrznych, jesli nie ma wyraznego polecenia.
-- Nie edytuj oryginalnego Animator Controllera MonsterMutant7.
-- Nie usuwaj assetow bez wyraznego polecenia.
-- Nie rob masowego reimportu.
-- Nie commituj automatycznie, chyba ze uzytkownik poprosi.
-
-## Aktualna struktura Assets
-Po porzadkowaniu z 2026-06-19 aktualna struktura jest:
+## Glowne sceny
 
 ```text
-Assets/
-  JungleSam/
-    Scripts/
-    Prefabs/
-    Scenes/
-    ScriptableObjects/
-    Settings/
-    UI/
-    Enemies/MutantStalker/
-  ThirdParty/
-    Flooded_Grounds/
-    Models/
-  TextMesh Pro/
-  TutorialInfo/
-  _TerrainAutoUpgrade/
+Assets/ThirdParty/Flooded_Grounds/Scenes/Scene_A.unity
+Assets/JungleSam/Scenes/Test/World.unity
 ```
 
-Nie zakladaj juz starych sciezek:
+## Glowne foldery
+
+```text
+Assets/JungleSam/
+Assets/ThirdParty/
+Dokumentacja/
+```
+
+Nie zakladaj starych sciezek:
 
 ```text
 Assets/Scripts
 Assets/Prefabs
 Assets/Scenes
 Assets/Models
-Assets/Flooded_Grounds
 Assets/Settings
 ```
 
-## Sceny
-Docelowa mapa bazowa:
+## Zasady pracy
 
-```text
-Assets/ThirdParty/Flooded_Grounds/Scenes/Scene_A.unity
-```
+- Najpierw sprawdz rzeczywiste pliki przez `rg --files` / `rg`.
+- Nie zgaduj nazw scen, prefabow, klas ani folderow.
+- Nie edytuj assetow third-party bez wyraznego polecenia.
+- Nie edytuj oryginalnego MonsterMutant7 Animator Controller.
+- Nie rob masowego reimportu.
+- Nie commituj automatycznie.
+- Preferuj male, konkretne patche.
+- Preferuj `[SerializeField] private`.
+- Nie zmieniaj publicznych nazw klas/metod/pol bez potrzeby.
+- Po zmianach podaj: co zmieniono, co podpiac w Inspectorze, jak testowac.
 
-Scena testowa projektu:
+## Systemy szczegolnie wrazliwe
 
-```text
-Assets/JungleSam/Scenes/Test/World.unity
-```
-
-`ProjectSettings/EditorBuildSettings.asset` wskazuje obecnie:
-
-```text
-Assets/ThirdParty/Flooded_Grounds/Scenes/Scene_A.unity
-Assets/JungleSam/Scenes/Test/World.unity
-```
-
-## Glowny kod gry
-
-```text
-Assets/JungleSam/Scripts/Player/
-Assets/JungleSam/Scripts/Weapon/
-Assets/JungleSam/Scripts/Enemy/
-Assets/JungleSam/Scripts/Spawning/
-Assets/JungleSam/Scripts/Pickups/
-Assets/JungleSam/Scripts/UI/
-Assets/JungleSam/Scripts/Combat/
-```
-
-## Weapon System
-`WeaponBase` jest oparty o raycast ze srodka kamery FPS.
-
-System zawiera:
-- magazynek + reserve ammo,
-- semi-auto i full-auto przez `WeaponData.isAutomatic`,
-- animator broni,
-- muzzle flash i audio,
-- ammo pickupy po `AmmoCategory`.
-
-Od 2026-06-19 `WeaponBase` obsluguje:
-- `IDamageable` jako pierwszy wybor,
-- fallback na stare `EnemyAI` dla kompatybilnosci zombie.
+- `WeaponBase` - raycast, ammo, reload, input, damage, shot feedback.
+- `WeaponData` - dane broni, dzwiek, muzzle flash, pitch/volume, delay feedbacku.
+- `Player 1 1.prefab` - player, bronie, muzzle points, AudioSource.
+- `GameplayHUDController` i builder HUD - nie nadpisywac recznych zmian przy Play Mode.
+- `StoryPickupInteractable`, `ObjectiveOnStoryPickup`, `ArenaEncounterController`, `EncounterResetService` - flow radio/arena/reset po smierci.
+- `MutantStalkerAI` i `MutantStalkerAnimator` - action locki i animator wrapper.
 
 ## MutantStalker
-Gameplayowy przeciwnik na bazie assetu MonsterMutant7.
 
 Pracuj tylko tutaj:
 
 ```text
 Assets/JungleSam/Enemies/MutantStalker/
-```
-
-Pliki:
-
-```text
-Assets/JungleSam/Enemies/MutantStalker/Scripts/MutantStalkerAI.cs
-Assets/JungleSam/Enemies/MutantStalker/Scripts/MutantStalkerAnimator.cs
-Assets/JungleSam/Enemies/MutantStalker/Editor/MutantStalkerAnimatorControllerBuilder.cs
-Assets/JungleSam/Enemies/MutantStalker/Animators/AC_MutantStalker_Gameplay.controller
 ```
 
 Builder controllera:
@@ -128,41 +81,19 @@ Builder controllera:
 Tools > Jungle Sam > Enemies > Build Mutant Stalker Animator Controller
 ```
 
-Nie edytowac oryginalnego MonsterMutant7 Animator Controller.
+## Test minimum po zmianach
 
-`MutantStalkerAI`:
-- implementuje `IDamageable`,
-- uzywa `NavMeshAgent`,
-- znajduje gracza po tagu `Player`,
-- obsluguje chase, attack, hit reaction, rage, death,
-- ma action locki dla attack/gethit/rage, aby agent nie slizgal modelu po ziemi podczas animacji akcji.
-
-Wazne wartosci w Inspectorze:
-
-```text
-Attack Animation Lock: 1.1
-Hit Reaction Lock: 0.28
-Hit Reaction Cooldown: 0.35
-Rage Animation Lock: 1.2
+```powershell
+dotnet build .\Assembly-CSharp.csproj
+git diff --check
 ```
 
-`MutantStalkerAnimator`:
-- steruje parametrami Animatora przez `Animator.StringToHash`,
-- pilnuje, aby locomotion nie przerywal attack/gethit/rage/death,
-- ignoruje nowe animacje po smierci,
-- uzywa 1-based indeksow animacji.
+W Unity:
 
-## Priorytety najblizszych testow
-- Sprawdzic Console po reimporcie.
-- Sprawdzic referencje prefabow po reorganizacji folderow.
-- Przetestowac Scene_A i World po zmianie Build Settings.
-- Przetestowac damage na zombie i MutantStalker.
-- Przetestowac MutantStalker: chase, attack, hit reaction, rage, death.
-- Jesli MutantStalker nadal slizga sie po akcjach, sprawdzic import klipow i Avatar/Rig MonsterMutant7.
-
-## Styl C#
-- Preferuj `[SerializeField] private`.
-- Nie zmieniaj nazw publicznych klas/metod/pol bez potrzeby.
-- Nie tworz duzych klas robiacych wszystko.
-- Minimalne, konkretne patche.
-- Przy zmianach opisz: co zmieniono, co podpiac w Inspectorze, jak testowac w Unity.
+- Console bez compile errors i missing scripts.
+- Pistolet: pojedynczy strzal, dzwiek, muzzle flash, reload.
+- AK: full auto, `PlayOneShot`, flash na kazdy faktyczny strzal.
+- Brak dzwieku/flasha przy pustym magazynku.
+- Damage na zombie i MutantStalkerze.
+- Radio -> arena -> smierc przed ukonczeniem -> reset.
+- Ukonczenie areny -> checkpoint -> smierc -> brak cofania areny.

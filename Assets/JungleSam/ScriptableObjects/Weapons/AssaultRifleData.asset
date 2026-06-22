@@ -21,7 +21,31 @@ MonoBehaviour:
   maxAmmo: 30
   maxReserveAmmo: 240
   reloadTime: 3.7
-  shootAnimationDuration: 0.19
+  shootAnimationDuration: 0.18
   isAutomatic: 1
-  muzzleFlashPrefab: {fileID: 0}
+  muzzleFlashPrefab: {fileID: 100000, guid: f27bdbe0c5454719a57708f9adba13a5, type: 3}
+  muzzleFlashSize: {x: 0.32, y: 0.18}
+  scaleMuzzleFlashByCameraDistance: 1
+  muzzleFlashReferenceDistance: 1
+  overrideMuzzleFlashTint: 1
+  muzzleFlashTint: {r: 1.35, g: 0.9, b: 0.48, a: 0.82}
+  overrideMuzzleFlashLight: 1
+  muzzleFlashLightEnabled: 1
+  muzzleFlashLightLifeTime: 0.012
+  muzzleFlashLightRange: 0.35
+  muzzleFlashLightIntensity: 0.75
   shootSound: {fileID: 0}
+  shootSounds:
+  - {fileID: 8300000, guid: b6afe37e2bc442ce8046a349f623abf4, type: 3}
+  - {fileID: 8300000, guid: 725e27bc4bc54911bb25b207c7bd8a76, type: 3}
+  - {fileID: 8300000, guid: 496572a51e4a4176aff10abfad5e4321, type: 3}
+  - {fileID: 8300000, guid: 04f2f472067246eb93d893501fa314c4, type: 3}
+  - {fileID: 8300000, guid: ffee67f5429c47fcbe49000234c4bc17, type: 3}
+  - {fileID: 8300000, guid: fe34735ed6044178963fc330738d0d1e, type: 3}
+  - {fileID: 8300000, guid: cb9c62242b7f4e33b4b48280a87c3fad, type: 3}
+  - {fileID: 8300000, guid: 39969f28caa74304b3a784a9afc92d6d, type: 3}
+  shootPitchRange: {x: 0.94, y: 1.03}
+  shootVolumeRange: {x: 0.7, y: 0.9}
+  shotFeedbackDelay: 0
+  shotSoundDelay: 0
+  interruptPreviousShotSound: 0

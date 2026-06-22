@@ -6,11 +6,11 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/JungleSam/Scenes/Menu/Scene_MainMenu.unity
+    guid: 23ebd140051c8b84fb93478b6030f22f
+  - enabled: 1
     path: Assets/ThirdParty/Flooded_Grounds/Scenes/Scene_A.unity
     guid: c0d944ca9defd20449bc336e50d75a08
-  - enabled: 1
-    path: Assets/JungleSam/Scenes/Test/World.unity
-    guid: afd91ff8096b86745a9a99d94a49ead2
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

@@ -13,6 +13,17 @@
 /[Ai]I_[Cc]ODEX/
 
 
+# Release archives
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
+
+# OS junk
+.DS_Store
+Thumbs.db
+Desktop.ini
 
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data

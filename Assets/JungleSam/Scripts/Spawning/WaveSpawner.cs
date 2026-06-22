@@ -285,13 +285,13 @@ public class WaveSpawner : MonoBehaviour, IEncounterResettable
             return false;
         }
 
-        if (spawnPoints == null || spawnPoints.Length == 0)
-        {
-            Debug.LogError($"[{name}] Brak spawn pointów.");
-            return false;
-        }
+        Transform spawnPoint = GetRandomValidSpawnPoint();
 
-        Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
+        if (spawnPoint == null)
+        {
+            Debug.LogWarning($"[{name}] Brak poprawnych spawn pointów. Używam pozycji WaveSpawner jako awaryjnego miejsca spawnu.", this);
+            spawnPoint = transform;
+        }
 
         Vector3 spawnPosition = spawnPoint.position;
         Quaternion spawnRotation = spawnPoint.rotation;
@@ -434,11 +434,51 @@ public class WaveSpawner : MonoBehaviour, IEncounterResettable
 
     private void ValidateSetup()
     {
-        if (spawnPoints == null || spawnPoints.Length == 0)
-            Debug.LogError($"[{name}] Brak spawn pointów w Inspectorze.");
+        if (GetValidSpawnPointCount() == 0)
+            Debug.LogWarning($"[{name}] Brak poprawnych spawn pointów w Inspectorze. Fala użyje pozycji WaveSpawner jako fallbacku.", this);
 
         if (waves == null || waves.Length == 0)
             Debug.LogError($"[{name}] Brak Waves w Inspectorze.");
+    }
+
+    private Transform GetRandomValidSpawnPoint()
+    {
+        int validCount = GetValidSpawnPointCount();
+
+        if (validCount == 0)
+            return null;
+
+        int selectedIndex = Random.Range(0, validCount);
+        int currentIndex = 0;
+
+        foreach (Transform spawnPoint in spawnPoints)
+        {
+            if (spawnPoint == null)
+                continue;
+
+            if (currentIndex == selectedIndex)
+                return spawnPoint;
+
+            currentIndex++;
+        }
+
+        return null;
+    }
+
+    private int GetValidSpawnPointCount()
+    {
+        if (spawnPoints == null)
+            return 0;
+
+        int count = 0;
+
+        foreach (Transform spawnPoint in spawnPoints)
+        {
+            if (spawnPoint != null)
+                count++;
+        }
+
+        return count;
     }
 
     private void SetWaveText(string text)

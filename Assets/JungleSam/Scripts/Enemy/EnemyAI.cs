@@ -7,6 +7,11 @@ using UnityEngine.AI;
 [DisallowMultipleComponent]
 public class EnemyAI : MonoBehaviour
 {
+    private const float NavMeshSnapRadius = 5f;
+    private const float DestinationSampleRadius = 4f;
+    private const float StuckVelocityThreshold = 0.08f;
+    private const float StuckCheckDelay = 1.25f;
+
     // Statyczny event, który powiadomi Spawner o śmierci wroga.
     public static System.Action OnEnemyDied;
     public event Action<EnemyAI> Died;
@@ -54,6 +59,9 @@ public class EnemyAI : MonoBehaviour
     [Header("Attack Slots")]
     [SerializeField] private EnemyAttackSlotManager attackSlotManager;
 
+    [Header("Audio")]
+    [SerializeField] private EnemyVoiceAudio enemyVoiceAudio;
+
     private Transform _player;
     private PlayerStats _playerStats;
     private NavMeshAgent _agent;
@@ -67,12 +75,24 @@ public class EnemyAI : MonoBehaviour
     private bool _deathNotified;
     private bool _hasTarget;
     private Coroutine _freezeDeathPoseRoutine;
+    private float _stuckTimer;
+    private float _fallbackMoveSpeed;
+    private bool _warnedOffNavMesh;
 
     private void Awake()
     {
         _agent = GetComponent<NavMeshAgent>();
         _animator = GetComponent<Animator>();
         _colliders = GetComponentsInChildren<Collider>();
+
+        if (enemyVoiceAudio == null)
+            enemyVoiceAudio = GetComponent<EnemyVoiceAudio>();
+
+        if (enemyVoiceAudio == null)
+            enemyVoiceAudio = GetComponentInParent<EnemyVoiceAudio>();
+
+        if (enemyVoiceAudio == null)
+            enemyVoiceAudio = GetComponentInChildren<EnemyVoiceAudio>();
 
         _agent.speed = speed;
         _agent.stoppingDistance = attackRange * stoppingDistanceMultiplier;
@@ -102,6 +122,8 @@ public class EnemyAI : MonoBehaviour
         _player = playerObj.transform;
         _playerStats = playerObj.GetComponent<PlayerStats>();
         ResolveAttackSlotManager();
+        TrySnapAgentToNavMesh();
+        enemyVoiceAudio?.StartVoiceLoop();
 
         if (_playerStats == null)
             Debug.LogError($"[{name}] Obiekt Player nie ma komponentu PlayerStats.");
@@ -109,13 +131,16 @@ public class EnemyAI : MonoBehaviour
 
     private void Update()
     {
-        if (_isDead || _player == null)
+        if (_isDead || _player == null || IsGameplayPaused())
             return;
 
+        _fallbackMoveSpeed = 0f;
         UpdateAnimatorMovement();
 
         if (_hasTarget)
             RotateTowardsTarget();
+
+        MonitorAndRecoverIfStuck();
 
         _aiTickTimer += Time.deltaTime;
         if (_aiTickTimer >= aiTickRate)
@@ -127,6 +152,9 @@ public class EnemyAI : MonoBehaviour
 
     private void HandleAILogic()
     {
+        if (IsGameplayPaused())
+            return;
+
         float distance = GetFlatDistanceToPlayer();
 
         if (!_hasTarget && distance <= detectionRange)
@@ -160,7 +188,12 @@ public class EnemyAI : MonoBehaviour
     private void ChasePlayer()
     {
         if (!_agent.enabled || !_agent.isOnNavMesh)
+        {
+            if (!TrySnapAgentToNavMesh())
+                DirectChasePlayer();
+
             return;
+        }
 
         _isAttacking = false;
         _agent.stoppingDistance = attackRange * stoppingDistanceMultiplier;
@@ -174,16 +207,121 @@ public class EnemyAI : MonoBehaviour
                 Mathf.Max(0.1f, _agent.stoppingDistance)
             );
 
-            _agent.SetDestination(slotPosition);
+            SetDestinationOnNavMesh(slotPosition);
         }
         else if (NavMesh.SamplePosition(_player.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
         {
-            _agent.SetDestination(hit.position);
+            SetDestinationOnNavMesh(hit.position);
         }
         else
         {
-            _agent.SetDestination(_player.position);
+            SetDestinationOnNavMesh(_player.position);
         }
+    }
+
+    private bool TrySnapAgentToNavMesh()
+    {
+        if (_agent == null || !_agent.enabled || _agent.isOnNavMesh)
+            return _agent != null && _agent.enabled && _agent.isOnNavMesh;
+
+        if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, NavMeshSnapRadius, NavMesh.AllAreas))
+        {
+            _agent.Warp(hit.position);
+            transform.position = hit.position;
+            return _agent.isOnNavMesh;
+        }
+
+        if (!_warnedOffNavMesh)
+        {
+            _warnedOffNavMesh = true;
+            Debug.LogWarning($"[{name}] Zombie is not on NavMesh. Using direct fallback chase. Move this enemy onto baked NavMesh for stable arena AI.", this);
+        }
+
+        return false;
+    }
+
+    private void DirectChasePlayer()
+    {
+        if (_player == null)
+            return;
+
+        Vector3 direction = _player.position - transform.position;
+        direction.y = 0f;
+
+        if (direction.sqrMagnitude < 0.001f)
+            return;
+
+        Vector3 moveDirection = direction.normalized;
+        transform.position += moveDirection * speed * Time.deltaTime;
+
+        Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
+
+        _fallbackMoveSpeed = speed;
+
+        if (!string.IsNullOrWhiteSpace(speedParameter) && _animator != null)
+            _animator.SetFloat(speedParameter, _fallbackMoveSpeed);
+    }
+
+    private void SetDestinationOnNavMesh(Vector3 destination)
+    {
+        if (!_agent.enabled || !_agent.isOnNavMesh)
+        {
+            if (!TrySnapAgentToNavMesh())
+                DirectChasePlayer();
+
+            return;
+        }
+
+        if (NavMesh.SamplePosition(destination, out NavMeshHit hit, DestinationSampleRadius, NavMesh.AllAreas))
+        {
+            if (!_agent.SetDestination(hit.position))
+                RecoverAgentPath();
+
+            return;
+        }
+
+        RecoverAgentPath();
+    }
+
+    private void MonitorAndRecoverIfStuck()
+    {
+        if (!_hasTarget || _isAttacking || _agent == null || !_agent.enabled || !_agent.isOnNavMesh || _agent.isStopped)
+        {
+            _stuckTimer = 0f;
+            return;
+        }
+
+        bool wantsToMove = _agent.hasPath && !_agent.pathPending && _agent.remainingDistance > _agent.stoppingDistance + 0.35f;
+        bool barelyMoving = _agent.velocity.sqrMagnitude < StuckVelocityThreshold * StuckVelocityThreshold;
+
+        if (!wantsToMove || !barelyMoving)
+        {
+            _stuckTimer = 0f;
+            return;
+        }
+
+        _stuckTimer += Time.deltaTime;
+
+        if (_stuckTimer < StuckCheckDelay)
+            return;
+
+        RecoverAgentPath();
+        _stuckTimer = 0f;
+    }
+
+    private void RecoverAgentPath()
+    {
+        if (_agent == null || !_agent.enabled || !_agent.isOnNavMesh)
+            return;
+
+        _agent.ResetPath();
+        ReleaseAttackSlot();
+
+        if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, NavMeshSnapRadius, NavMesh.AllAreas))
+            _agent.Warp(hit.position);
+
+        _aiTickTimer = aiTickRate;
     }
 
     private void StopMoving()
@@ -197,6 +335,9 @@ public class EnemyAI : MonoBehaviour
 
     private void TryAttack()
     {
+        if (IsGameplayPaused())
+            return;
+
         if (_isAttacking)
             return;
 
@@ -225,6 +366,9 @@ public class EnemyAI : MonoBehaviour
     // Możesz podpiąć tę metodę jako Animation Event w klatce kontaktu animacji ataku.
     public void DealDamageToPlayer()
     {
+        if (IsGameplayPaused())
+            return;
+
         if (_isDead || _player == null || _playerStats == null)
             return;
 
@@ -259,6 +403,7 @@ public class EnemyAI : MonoBehaviour
         _isDead = true;
         CancelInvoke();
         ReleaseAttackSlot();
+        enemyVoiceAudio?.SetDead();
 
         DisableDeathMovementAndPhysics();
 
@@ -429,6 +574,11 @@ public class EnemyAI : MonoBehaviour
             attackSlotManager.ReleaseSlot(this);
     }
 
+    private static bool IsGameplayPaused()
+    {
+        return PauseMenuController.IsPaused || Mathf.Approximately(Time.timeScale, 0f);
+    }
+
     private void OnDisable()
     {
         if (_freezeDeathPoseRoutine != null)
@@ -438,6 +588,7 @@ public class EnemyAI : MonoBehaviour
         }
 
         ReleaseAttackSlot();
+        enemyVoiceAudio?.StopVoiceLoop();
     }
 
     private void UpdateAnimatorMovement()
@@ -445,7 +596,7 @@ public class EnemyAI : MonoBehaviour
         if (string.IsNullOrWhiteSpace(speedParameter))
             return;
 
-        float currentSpeed = 0f;
+        float currentSpeed = _fallbackMoveSpeed;
 
         if (_agent.enabled && _agent.isOnNavMesh)
             currentSpeed = _agent.velocity.magnitude;

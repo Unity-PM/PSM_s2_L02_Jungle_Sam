@@ -64,6 +64,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: AssaultRifleAmmoBox
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9bade9a0281695a4a8a0b061abb5273f, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -97,7 +101,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AmmoPack
   ammoCategory: 1
   ammoAmount: 90
-  respawnTime: 2
+  respawnTime: 10
   rotationSpeed: 45
   bobbingSpeed: 2
   bobbingHeight: 0.1

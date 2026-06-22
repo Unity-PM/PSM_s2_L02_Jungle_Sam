@@ -14,6 +14,9 @@ public class MutantStalkerAI : MonoBehaviour, IDamageable
     [SerializeField] private Transform target;
     [SerializeField] private EnemyAttackSlotManager attackSlotManager;
 
+    [Header("Audio")]
+    [SerializeField] private EnemyVoiceAudio enemyVoiceAudio;
+
     [Header("Stats")]
     [SerializeField] private float maxHealth = 180f;
     [SerializeField] private float walkSpeed = 2.4f;
@@ -83,6 +86,15 @@ public class MutantStalkerAI : MonoBehaviour, IDamageable
         if (mutantAnimator == null)
             mutantAnimator = GetComponentInChildren<MutantStalkerAnimator>();
 
+        if (enemyVoiceAudio == null)
+            enemyVoiceAudio = GetComponent<EnemyVoiceAudio>();
+
+        if (enemyVoiceAudio == null)
+            enemyVoiceAudio = GetComponentInParent<EnemyVoiceAudio>();
+
+        if (enemyVoiceAudio == null)
+            enemyVoiceAudio = GetComponentInChildren<EnemyVoiceAudio>();
+
         _currentHealth = maxHealth;
 
         _agent.speed = walkSpeed;
@@ -103,7 +115,7 @@ public class MutantStalkerAI : MonoBehaviour, IDamageable
 
     private void Update()
     {
-        if (_isDead)
+        if (_isDead || IsGameplayPaused())
             return;
 
         ResolveTarget();
@@ -126,6 +138,9 @@ public class MutantStalkerAI : MonoBehaviour, IDamageable
 
     private void TickAI()
     {
+        if (IsGameplayPaused())
+            return;
+
         if (target == null)
         {
             SetActive(false);
@@ -253,6 +268,9 @@ public class MutantStalkerAI : MonoBehaviour, IDamageable
 
     private void TryAttack()
     {
+        if (IsGameplayPaused())
+            return;
+
         if (_isAttacking || target == null)
             return;
 
@@ -294,6 +312,9 @@ public class MutantStalkerAI : MonoBehaviour, IDamageable
 
     public void DealDamageToTarget()
     {
+        if (IsGameplayPaused())
+            return;
+
         if (_isDead || target == null || _targetStats == null)
             return;
 
@@ -360,6 +381,7 @@ public class MutantStalkerAI : MonoBehaviour, IDamageable
         _isDead = true;
         CancelInvoke();
         ReleaseAttackSlot();
+        enemyVoiceAudio?.SetDead();
         StopAgentOnly();
 
         if (_agent.enabled)
@@ -400,6 +422,11 @@ public class MutantStalkerAI : MonoBehaviour, IDamageable
         if (!isActive)
             ReleaseAttackSlot();
 
+        if (isActive)
+            enemyVoiceAudio?.StartVoiceLoop();
+        else
+            enemyVoiceAudio?.StopVoiceLoop();
+
         if (mutantAnimator != null)
             mutantAnimator.SetActive(isActive);
     }
@@ -416,6 +443,11 @@ public class MutantStalkerAI : MonoBehaviour, IDamageable
     {
         if (attackSlotManager != null)
             attackSlotManager.ReleaseSlot(this);
+    }
+
+    private static bool IsGameplayPaused()
+    {
+        return PauseMenuController.IsPaused || Mathf.Approximately(Time.timeScale, 0f);
     }
 
     private void TryRandomIdle()
@@ -544,5 +576,6 @@ public class MutantStalkerAI : MonoBehaviour, IDamageable
     private void OnDisable()
     {
         ReleaseAttackSlot();
+        enemyVoiceAudio?.StopVoiceLoop();
     }
 }

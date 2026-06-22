@@ -5,6 +5,10 @@ using UnityEngine.Events;
 [DisallowMultipleComponent]
 public class ArenaEncounterController : MonoBehaviour, IEncounterResettable
 {
+    private const string ChurchCemeteryArenaId = "Arena_ChurchCemetery";
+    private const string ChurchHouseObjectiveText = "Sprawd\u017a zabudowania wskazane w raporcie";
+    private const string ChurchHouseSecondaryObjectiveText = "Przejd\u017a do domu obok ko\u015bcio\u0142a";
+
     [Header("Arena")]
     [SerializeField] private string arenaId = "Arena_DockStart";
     [SerializeField] private WaveSpawner waveSpawner;
@@ -35,6 +39,13 @@ public class ArenaEncounterController : MonoBehaviour, IEncounterResettable
     [SerializeField] private GameObject[] disableOnStart;
     [SerializeField] private GameObject[] enableOnComplete;
     [SerializeField] private GameObject[] disableOnComplete;
+
+    [Header("Objective On Complete")]
+    [SerializeField] private bool updateObjectiveOnComplete = false;
+    [SerializeField] private string completedObjectiveText = "Sprawdź zabudowania wskazane w raporcie";
+    [SerializeField] private string completedSecondaryObjectiveText = "Przejdź do domu obok kościoła";
+    [SerializeField] private bool showObjectiveNotificationOnComplete = true;
+    [SerializeField] private string objectiveNotificationText = "CEL ZAKTUALIZOWANY";
 
     [Header("Death Reset")]
     [SerializeField] private EncounterResetService encounterResetService;
@@ -151,6 +162,7 @@ public class ArenaEncounterController : MonoBehaviour, IEncounterResettable
 
         SetObjectsActive(enableOnComplete, true);
         SetObjectsActive(disableOnComplete, false);
+        ApplyCompletedObjective();
 
         if (activateCheckpointOnComplete && checkpointOnComplete != null)
         {
@@ -205,6 +217,47 @@ public class ArenaEncounterController : MonoBehaviour, IEncounterResettable
             if (obj != null)
                 obj.SetActive(active);
         }
+    }
+
+    private void ApplyCompletedObjective()
+    {
+        bool forceChurchHouseObjective = string.Equals(arenaId, ChurchCemeteryArenaId, System.StringComparison.Ordinal);
+
+        if (!updateObjectiveOnComplete && !forceChurchHouseObjective)
+            return;
+
+        string objectiveText = forceChurchHouseObjective
+            ? ChurchHouseObjectiveText
+            : completedObjectiveText;
+
+        string secondaryObjectiveText = forceChurchHouseObjective
+            ? ChurchHouseSecondaryObjectiveText
+            : completedSecondaryObjectiveText;
+
+        GameplayHUDController hud = GameplayHUDController.Instance != null
+            ? GameplayHUDController.Instance
+            : FindFirstObjectByType<GameplayHUDController>();
+
+        if (hud == null)
+        {
+            if (UIManager.Instance != null)
+            {
+                UIManager.Instance.SetObjective(objectiveText, secondaryObjectiveText);
+                UIManager.Instance.ShowNotification(objectiveNotificationText);
+                Debug.Log($"Arena complete objective applied through UIManager: {arenaId} -> {objectiveText} / {secondaryObjectiveText}");
+                return;
+            }
+
+            Debug.LogWarning($"[{name}] Arena complete objective could not find HUD: {objectiveText} / {secondaryObjectiveText}", this);
+            return;
+        }
+
+        hud.SetObjective(objectiveText, secondaryObjectiveText);
+
+        if (showObjectiveNotificationOnComplete)
+            hud.ShowNotification(objectiveNotificationText);
+
+        Debug.Log($"Arena complete objective applied: {arenaId} -> {objectiveText} / {secondaryObjectiveText}", this);
     }
 
     private void SetGatesClosed(bool closed)

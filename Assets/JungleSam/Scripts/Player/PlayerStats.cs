@@ -26,6 +26,7 @@ public class PlayerStats : MonoBehaviour
     public float CurrentHealth => _currentHealth;
     public float MaxHealth => _playerHealth != null ? _playerHealth.MaxHealth : maxHealth;
     public float MaxArmor => maxArmor;
+    public float CurrentArmor => armor;
     public float Armor => armor;
     public int Coins => coins;
     public bool IsDead => _playerHealth != null ? _playerHealth.IsDead : _isDead;
@@ -62,6 +63,9 @@ public class PlayerStats : MonoBehaviour
 
     public void TakeDamage(float amount)
     {
+        if (PauseMenuController.IsPaused || Mathf.Approximately(Time.timeScale, 0f))
+            return;
+
         if (IsDead || amount <= 0f)
             return;
 
@@ -100,30 +104,45 @@ public class PlayerStats : MonoBehaviour
             Die();
     }
 
-    public void Heal(float amount)
+    public bool Heal(float amount)
     {
         if (IsDead || amount <= 0f)
-            return;
+            return false;
+
+        float currentMaxHealth = MaxHealth;
+
+        if (_currentHealth >= currentMaxHealth)
+            return false;
 
         if (_playerHealth != null)
         {
             _playerHealth.Heal(amount);
-            return;
+            _currentHealth = Mathf.Clamp(_playerHealth.CurrentHealth, 0f, currentMaxHealth);
+            UpdateUI();
+            NotifyStatsChanged();
+            return true;
         }
 
         _currentHealth = Mathf.Clamp(_currentHealth + amount, 0f, maxHealth);
         UpdateUI();
         NotifyStatsChanged();
+        return true;
     }
 
-    public void AddArmor(float amount)
+    public bool AddArmor(float amount)
     {
         if (IsDead || amount <= 0f)
-            return;
+            return false;
 
-        armor = Mathf.Clamp(armor + amount, 0f, Mathf.Max(1f, maxArmor));
+        maxArmor = Mathf.Max(1f, maxArmor);
+
+        if (armor >= maxArmor)
+            return false;
+
+        armor = Mathf.Clamp(armor + amount, 0f, maxArmor);
         UpdateUI();
         NotifyStatsChanged();
+        return true;
     }
 
     public void SetArmor(float value)

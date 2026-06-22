@@ -4,6 +4,7 @@ using UnityEngine;
 public class ArenaStartOnStoryPickup : MonoBehaviour
 {
     [Header("Arena")]
+    [SerializeField] private ArenaEncounterController arenaController;
     [SerializeField] private string arenaId = "Arena_DockStart";
     [SerializeField] private bool startOnlyOnce = true;
 
@@ -15,11 +16,11 @@ public class ArenaStartOnStoryPickup : MonoBehaviour
         if (startOnlyOnce && _started)
             return;
 
-        ArenaEncounterController arena = FindArenaById(arenaId);
+        ArenaEncounterController arena = arenaController != null ? arenaController : FindArenaById(arenaId);
 
         if (arena == null)
         {
-            Debug.LogWarning($"[{name}] Story pickup could not find arena with id '{arenaId}'.", this);
+            Debug.LogWarning($"[{name}] Story pickup could not find arena with id '{arenaId}'. Available arena ids: {GetAvailableArenaIds()}", this);
             return;
         }
 
@@ -42,5 +43,31 @@ public class ArenaStartOnStoryPickup : MonoBehaviour
         }
 
         return null;
+    }
+
+    private static string GetAvailableArenaIds()
+    {
+        ArenaEncounterController[] arenas = FindObjectsByType<ArenaEncounterController>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None
+        );
+
+        if (arenas == null || arenas.Length == 0)
+            return "none";
+
+        System.Text.StringBuilder builder = new System.Text.StringBuilder();
+
+        foreach (ArenaEncounterController arena in arenas)
+        {
+            if (arena == null)
+                continue;
+
+            if (builder.Length > 0)
+                builder.Append(", ");
+
+            builder.Append(arena.ArenaId);
+        }
+
+        return builder.Length > 0 ? builder.ToString() : "none";
     }
 }

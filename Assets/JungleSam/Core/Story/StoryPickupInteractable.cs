@@ -266,6 +266,9 @@ public class StoryPickupInteractable : MonoBehaviour, IEncounterResettable
 
     private void ResolveStoryPopup()
     {
+        if (storyPopupUI == null && UIManager.Instance != null)
+            storyPopupUI = UIManager.Instance.StoryPopupUI;
+
         if (storyPopupUI == null)
             storyPopupUI = FindFirstObjectByType<StoryItemPopupUI>(FindObjectsInactive.Include);
     }

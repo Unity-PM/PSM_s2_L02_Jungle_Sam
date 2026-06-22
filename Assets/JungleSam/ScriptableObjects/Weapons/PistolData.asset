@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   weaponName: Pistol
   weaponPrefab: {fileID: 919132149155446097, guid: a4dbb4bce0570614f82d47659bdd31fa, type: 3}
+  ammoCategory: 0
   damage: 15
   fireRate: 0.3
   range: 100
@@ -22,5 +23,21 @@ MonoBehaviour:
   reloadTime: 1.667
   shootAnimationDuration: 0.283
   isAutomatic: 0
-  muzzleFlashPrefab: {fileID: 0}
-  shootSound: {fileID: 0}
+  muzzleFlashPrefab: {fileID: 100000, guid: f27bdbe0c5454719a57708f9adba13a5, type: 3}
+  muzzleFlashSize: {x: 0.68, y: 0.34}
+  scaleMuzzleFlashByCameraDistance: 1
+  muzzleFlashReferenceDistance: 1
+  overrideMuzzleFlashTint: 1
+  muzzleFlashTint: {r: 1.1, g: 0.78, b: 0.42, a: 0.72}
+  overrideMuzzleFlashLight: 1
+  muzzleFlashLightEnabled: 1
+  muzzleFlashLightLifeTime: 0.01
+  muzzleFlashLightRange: 0.35
+  muzzleFlashLightIntensity: 0.94
+  shootSound: {fileID: 8300000, guid: 2357316fb5134faf9563d5f8397a2e4a, type: 3}
+  shootSounds: []
+  shootPitchRange: {x: 0.96, y: 1.04}
+  shootVolumeRange: {x: 0.85, y: 1}
+  shotFeedbackDelay: 0.03
+  shotSoundDelay: 0.055
+  interruptPreviousShotSound: 1

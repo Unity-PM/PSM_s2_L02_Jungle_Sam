@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class WeaponBase : MonoBehaviour
@@ -11,6 +12,18 @@ public class WeaponBase : MonoBehaviour
     private static readonly int IsWalkingHash = Animator.StringToHash("IsWalking");
     private static readonly int IsRunningHash = Animator.StringToHash("IsRunning");
     private static readonly int InspectHash = Animator.StringToHash("Inspect");
+    private static readonly string[] MuzzlePointFallbackNames =
+    {
+        "MuzzlePoint",
+        "Barrel_end_end",
+        "Barrel_end",
+        "BarrelEnd",
+        "wpn_silencer_end",
+        "wpn_silencer",
+        "wpn_bullet_end",
+        "wpn_bullet",
+        "Barrel"
+    };
 
     public WeaponData weaponData;
 
@@ -29,21 +42,43 @@ public class WeaponBase : MonoBehaviour
 
     public bool isUnlocked = false;
 
+    [Header("Shot Feedback")]
+    [SerializeField] private Transform muzzlePoint;
+    [SerializeField] private Transform muzzleRotationReference;
+    [SerializeField] private bool useMainCameraForMuzzleFlashRotation = true;
+    [SerializeField] private Vector3 muzzleFlashRotationOffset;
+    [SerializeField] private AudioSource weaponAudioSource;
+
     [Header("Raycast")]
     [SerializeField] private LayerMask hitMask;
     [SerializeField] private bool drawDebugRay = true;
 
-    void Start()
-    {
-        _mainCam = Camera.main;
-        _currentAmmo = weaponData.maxAmmo;
-        _reserveAmmo = weaponData.maxReserveAmmo; // Inicjalizacja schowka
+    private bool _missingMuzzlePointWarningLogged;
 
+    void Awake()
+    {
         _weaponAnimator = GetComponent<Animator>();
         if (_weaponAnimator == null)
             _weaponAnimator = GetComponentInChildren<Animator>();
 
-        _audioSource = GetComponent<AudioSource>();
+        CacheMuzzlePoint();
+        SetupAudioSource();
+    }
+
+    void Start()
+    {
+        _mainCam = Camera.main;
+
+        if (weaponData == null)
+        {
+            Debug.LogError("WeaponData not assigned on weapon: " + gameObject.name);
+            enabled = false;
+            return;
+        }
+
+        _currentAmmo = weaponData.maxAmmo;
+        _reserveAmmo = weaponData.maxReserveAmmo; // Inicjalizacja schowka
+
         if (_weaponAnimator == null)
             Debug.LogError("Animator not found on weapon: " + gameObject.name);
 
@@ -91,6 +126,9 @@ public class WeaponBase : MonoBehaviour
 
     public void TryShoot()
     {
+        if (weaponData == null)
+            return;
+
         if (Time.time >= _nextFireTime && _currentAmmo > 0 && !_isReloading)
         {
             Shoot();
@@ -114,24 +152,7 @@ public class WeaponBase : MonoBehaviour
             _weaponAnimator.SetTrigger(ShootHash);
         }
 
-        if (weaponData.shootSound != null)
-        {
-            if (_audioSource == null)
-                _audioSource = gameObject.AddComponent<AudioSource>();
-
-            _audioSource.PlayOneShot(weaponData.shootSound);
-        }
-
-        if (weaponData.muzzleFlashPrefab != null)
-        {
-            GameObject flash = Instantiate(
-                weaponData.muzzleFlashPrefab,
-                transform.position,
-                transform.rotation
-            );
-
-            Destroy(flash, 1f);
-        }
+        PlayShotFeedbackWithDelay();
 
         if (_mainCam == null)
             return;
@@ -258,5 +279,221 @@ public class WeaponBase : MonoBehaviour
         // Dodaj amunicję do schowka, nie do magazynku
         _reserveAmmo = Mathf.Min(_reserveAmmo + amount, weaponData.maxReserveAmmo);
         Debug.Log($"{weaponData.weaponName}: Reserve ammo now {_reserveAmmo}/{weaponData.maxReserveAmmo}");
+    }
+
+    private void PlayShotFeedbackWithDelay()
+    {
+        if (weaponData == null)
+            return;
+
+        float flashDelay = Mathf.Max(0f, weaponData.shotFeedbackDelay);
+        if (flashDelay <= 0f)
+            SpawnMuzzleFlash();
+        else
+            StartCoroutine(SpawnMuzzleFlashDelayed(flashDelay));
+
+        float soundDelay = weaponData.shotSoundDelay > 0f
+            ? weaponData.shotSoundDelay
+            : flashDelay;
+
+        if (soundDelay <= 0f)
+            PlayShotSound();
+        else
+            StartCoroutine(PlayShotSoundDelayed(soundDelay));
+    }
+
+    private IEnumerator SpawnMuzzleFlashDelayed(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        SpawnMuzzleFlash();
+    }
+
+    private IEnumerator PlayShotSoundDelayed(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        PlayShotSound();
+    }
+
+    private void PlayShotSound()
+    {
+        if (weaponData == null)
+            return;
+
+        AudioClip clip = GetShotSoundClip();
+        if (clip == null)
+            return;
+
+        SetupAudioSource();
+
+        if (weaponData.interruptPreviousShotSound)
+            weaponAudioSource.Stop();
+
+        weaponAudioSource.pitch = RandomRange(weaponData.shootPitchRange, 1f);
+        float volume = RandomRange(weaponData.shootVolumeRange, 1f);
+        weaponAudioSource.PlayOneShot(clip, volume);
+    }
+
+    private void SpawnMuzzleFlash()
+    {
+        if (weaponData == null || weaponData.muzzleFlashPrefab == null)
+            return;
+
+        Transform spawnPoint = GetMuzzleTransform();
+        Quaternion flashRotation = GetMuzzleFlashRotation();
+        GameObject flash = Instantiate(weaponData.muzzleFlashPrefab, spawnPoint.position, flashRotation);
+        MuzzleFlashBillboardEffect billboardEffect =
+            flash.GetComponent<MuzzleFlashBillboardEffect>()
+            ?? flash.GetComponentInChildren<MuzzleFlashBillboardEffect>();
+
+        if (billboardEffect != null)
+        {
+            billboardEffect.SetSize(weaponData.muzzleFlashSize);
+            billboardEffect.SetCameraDistanceScaling(
+                weaponData.scaleMuzzleFlashByCameraDistance,
+                weaponData.muzzleFlashReferenceDistance
+            );
+
+            if (weaponData.overrideMuzzleFlashTint)
+                billboardEffect.SetTint(weaponData.muzzleFlashTint);
+
+            if (weaponData.overrideMuzzleFlashLight)
+            {
+                billboardEffect.SetLightSettings(
+                    weaponData.muzzleFlashLightEnabled,
+                    weaponData.muzzleFlashLightLifeTime,
+                    weaponData.muzzleFlashLightRange,
+                    weaponData.muzzleFlashLightIntensity
+                );
+            }
+
+            billboardEffect.Initialize(
+                spawnPoint,
+                muzzleRotationReference,
+                useMainCameraForMuzzleFlashRotation,
+                muzzleFlashRotationOffset
+            );
+        }
+
+        bool hasSelfManagedEffect =
+            flash.GetComponent<MuzzleFlashEffect>() != null
+            || flash.GetComponentInChildren<MuzzleFlashEffect>() != null
+            || billboardEffect != null;
+
+        if (!hasSelfManagedEffect)
+            Destroy(flash, 0.12f);
+    }
+
+    private AudioClip GetShotSoundClip()
+    {
+        AudioClip[] clips = weaponData.shootSounds;
+        if (clips != null && clips.Length > 0)
+        {
+            int startIndex = Random.Range(0, clips.Length);
+
+            for (int i = 0; i < clips.Length; i++)
+            {
+                AudioClip clip = clips[(startIndex + i) % clips.Length];
+                if (clip != null)
+                    return clip;
+            }
+        }
+
+        return weaponData.shootSound;
+    }
+
+    private void SetupAudioSource()
+    {
+        if (weaponAudioSource == null)
+            weaponAudioSource = GetComponent<AudioSource>();
+
+        if (weaponAudioSource == null)
+            weaponAudioSource = gameObject.AddComponent<AudioSource>();
+
+        weaponAudioSource.enabled = true;
+        weaponAudioSource.playOnAwake = false;
+        weaponAudioSource.loop = false;
+        weaponAudioSource.spatialBlend = 0f;
+        weaponAudioSource.dopplerLevel = 0f;
+
+        _audioSource = weaponAudioSource;
+    }
+
+    private void CacheMuzzlePoint()
+    {
+        if (muzzlePoint != null)
+            return;
+
+        foreach (string fallbackName in MuzzlePointFallbackNames)
+        {
+            Transform found = FindChildRecursive(transform, fallbackName);
+            if (found != null)
+            {
+                muzzlePoint = found;
+                return;
+            }
+        }
+    }
+
+    private Transform GetMuzzleTransform()
+    {
+        if (muzzlePoint != null)
+            return muzzlePoint;
+
+        if (!_missingMuzzlePointWarningLogged)
+        {
+            Debug.LogWarning($"Muzzle point not assigned for weapon '{gameObject.name}'. Falling back to weapon transform.");
+            _missingMuzzlePointWarningLogged = true;
+        }
+
+        return transform;
+    }
+
+    private Quaternion GetMuzzleFlashRotation()
+    {
+        Quaternion rotation;
+
+        if (useMainCameraForMuzzleFlashRotation && Camera.main != null)
+        {
+            Transform cameraTransform = Camera.main.transform;
+            rotation = Quaternion.LookRotation(cameraTransform.forward, cameraTransform.up);
+        }
+        else if (muzzleRotationReference != null)
+        {
+            rotation = Quaternion.LookRotation(muzzleRotationReference.forward, muzzleRotationReference.up);
+        }
+        else
+        {
+            rotation = Quaternion.LookRotation(transform.forward, transform.up);
+        }
+
+        return rotation * Quaternion.Euler(muzzleFlashRotationOffset);
+    }
+
+    private static Transform FindChildRecursive(Transform root, string childName)
+    {
+        if (root == null)
+            return null;
+
+        foreach (Transform child in root)
+        {
+            if (child.name == childName)
+                return child;
+
+            Transform found = FindChildRecursive(child, childName);
+            if (found != null)
+                return found;
+        }
+
+        return null;
+    }
+
+    private static float RandomRange(Vector2 range, float fallback)
+    {
+        if (range.x <= 0f && range.y <= 0f)
+            return fallback;
+
+        float min = Mathf.Min(range.x, range.y);
+        float max = Mathf.Max(range.x, range.y);
+        return Mathf.Approximately(min, max) ? min : Random.Range(min, max);
     }
 }
