@@ -31,6 +31,9 @@ public class GameplayHUDController : MonoBehaviour
     [Header("Defaults")]
     [SerializeField] private bool applyDefaultValuesOnStart = false;
 
+    public string CurrentObjectiveText => mainObjectiveText != null ? mainObjectiveText.text : string.Empty;
+    public string CurrentSecondaryObjectiveText => secondaryObjectiveText != null && secondaryObjectiveText.gameObject.activeSelf ? secondaryObjectiveText.text : string.Empty;
+
     private void Awake()
     {
         if (Instance == null || Instance == this)

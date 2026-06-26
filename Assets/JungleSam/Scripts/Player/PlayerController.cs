@@ -40,6 +40,18 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    public void ResetLook(Quaternion worldRotation)
+    {
+        Vector3 euler = worldRotation.eulerAngles;
+        transform.rotation = Quaternion.Euler(0f, euler.y, 0f);
+        _xRotation = 0f;
+        _lookInput = Vector2.zero;
+        _velocity = Vector3.zero;
+
+        if (playerCamera != null)
+            playerCamera.localRotation = Quaternion.identity;
+    }
+
     void Update()
     {
         ReadInput();
@@ -94,8 +106,7 @@ public class PlayerController : MonoBehaviour
 
         float currentSpeed = _sprintPressed ? sprintSpeed : walkSpeed;
 
-        Vector3 move = transform.right * _moveInput.x + transform.forward * _moveInput.y;
-        _controller.Move(move * currentSpeed * Time.deltaTime);
+        Vector3 horizontalMove = transform.right * _moveInput.x + transform.forward * _moveInput.y;
 
         if (_jumpPressed && _isGrounded)
         {
@@ -103,7 +114,9 @@ public class PlayerController : MonoBehaviour
         }
 
         _velocity.y += gravity * Time.deltaTime;
-        _controller.Move(_velocity * Time.deltaTime);
+
+        Vector3 frameMove = horizontalMove * currentSpeed + _velocity;
+        _controller.Move(frameMove * Time.deltaTime);
     }
 
     void UpdateWeaponAnimations()

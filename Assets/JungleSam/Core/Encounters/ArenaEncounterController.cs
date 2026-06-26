@@ -5,6 +5,9 @@ using UnityEngine.Events;
 [DisallowMultipleComponent]
 public class ArenaEncounterController : MonoBehaviour, IEncounterResettable
 {
+    private const string DockStartArenaId = "Arena_DockStart";
+    private const string DockChurchObjectiveText = "Przeszukaj teren ko\u015bcio\u0142a";
+    private const string DockChurchSecondaryObjectiveText = "Znajd\u017a \u015blady oddzia\u0142u Grom Division";
     private const string ChurchCemeteryArenaId = "Arena_ChurchCemetery";
     private const string ChurchHouseObjectiveText = "Sprawd\u017a zabudowania wskazane w raporcie";
     private const string ChurchHouseSecondaryObjectiveText = "Przejd\u017a do domu obok ko\u015bcio\u0142a";
@@ -136,6 +139,7 @@ public class ArenaEncounterController : MonoBehaviour, IEncounterResettable
         SetObjectsActive(disableOnStart, false);
         ArenaStarted?.Invoke(this);
         onArenaStarted?.Invoke();
+        GameplaySaveSystem.SaveArenaStarted(this);
 
         if (waveSpawner != null)
         {
@@ -179,6 +183,46 @@ public class ArenaEncounterController : MonoBehaviour, IEncounterResettable
         Debug.Log($"Arena completed: {arenaId}");
         ArenaCompleted?.Invoke(this);
         onArenaCompleted?.Invoke();
+
+        GetCompletedObjectiveTexts(out string objectiveText, out string secondaryObjectiveText);
+        GameplaySaveSystem.SaveArenaCompleted(this, objectiveText, secondaryObjectiveText);
+    }
+
+    public void RestoreCompletedFromSave(bool applyObjective)
+    {
+        _completed = true;
+        _started = false;
+
+        if (waveSpawner != null && waveSpawner.IsRunning)
+            waveSpawner.StopSpawnerAndClearEnemies();
+
+        if (openGatesOnComplete)
+            SetGatesClosed(false);
+
+        SetObjectsActive(enableOnComplete, true);
+        SetObjectsActive(disableOnComplete, false);
+
+        if (activateCheckpointOnComplete && checkpointOnComplete != null)
+        {
+            CheckpointManager manager = CheckpointManager.Instance != null
+                ? CheckpointManager.Instance
+                : FindFirstObjectByType<CheckpointManager>();
+
+            if (manager != null)
+                manager.RegisterCheckpoint(checkpointOnComplete);
+        }
+
+        if (applyObjective)
+            ApplyCompletedObjective();
+    }
+
+    public void RestoreStartedFromSave()
+    {
+        if (_completed)
+            return;
+
+        _started = false;
+        StartArena();
     }
 
     public void ResetEncounter()
@@ -221,18 +265,8 @@ public class ArenaEncounterController : MonoBehaviour, IEncounterResettable
 
     private void ApplyCompletedObjective()
     {
-        bool forceChurchHouseObjective = string.Equals(arenaId, ChurchCemeteryArenaId, System.StringComparison.Ordinal);
-
-        if (!updateObjectiveOnComplete && !forceChurchHouseObjective)
+        if (!GetCompletedObjectiveTexts(out string objectiveText, out string secondaryObjectiveText))
             return;
-
-        string objectiveText = forceChurchHouseObjective
-            ? ChurchHouseObjectiveText
-            : completedObjectiveText;
-
-        string secondaryObjectiveText = forceChurchHouseObjective
-            ? ChurchHouseSecondaryObjectiveText
-            : completedSecondaryObjectiveText;
 
         GameplayHUDController hud = GameplayHUDController.Instance != null
             ? GameplayHUDController.Instance
@@ -258,6 +292,34 @@ public class ArenaEncounterController : MonoBehaviour, IEncounterResettable
             hud.ShowNotification(objectiveNotificationText);
 
         Debug.Log($"Arena complete objective applied: {arenaId} -> {objectiveText} / {secondaryObjectiveText}", this);
+    }
+
+    private bool GetCompletedObjectiveTexts(out string objectiveText, out string secondaryObjectiveText)
+    {
+        if (string.Equals(arenaId, DockStartArenaId, System.StringComparison.Ordinal))
+        {
+            objectiveText = DockChurchObjectiveText;
+            secondaryObjectiveText = DockChurchSecondaryObjectiveText;
+            return true;
+        }
+
+        if (string.Equals(arenaId, ChurchCemeteryArenaId, System.StringComparison.Ordinal))
+        {
+            objectiveText = ChurchHouseObjectiveText;
+            secondaryObjectiveText = ChurchHouseSecondaryObjectiveText;
+            return true;
+        }
+
+        if (!updateObjectiveOnComplete)
+        {
+            objectiveText = null;
+            secondaryObjectiveText = null;
+            return false;
+        }
+
+        objectiveText = completedObjectiveText;
+        secondaryObjectiveText = completedSecondaryObjectiveText;
+        return true;
     }
 
     private void SetGatesClosed(bool closed)

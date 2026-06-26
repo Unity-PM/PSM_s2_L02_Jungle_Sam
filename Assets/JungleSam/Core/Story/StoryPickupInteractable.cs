@@ -179,6 +179,22 @@ public class StoryPickupInteractable : MonoBehaviour, IEncounterResettable
             SetVisualVisible(false);
 
         Debug.Log($"Story pickup collected: {pickupId} ({displayName})");
+        GameplaySaveSystem.SaveStoryPickupCollected(this);
+    }
+
+    public void RestoreCollectedFromSave()
+    {
+        _pickedUp = true;
+        _playerInRange = false;
+        _promptLogged = false;
+
+        if (_triggerCollider != null)
+            _triggerCollider.enabled = false;
+
+        if (hideVisualAfterPickup)
+            SetVisualVisible(false);
+
+        HidePrompt();
     }
 
     private void ForceResetPickup()

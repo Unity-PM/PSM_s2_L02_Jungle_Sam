@@ -9,9 +9,10 @@ public class EnemyAI : MonoBehaviour
 {
     private const float NavMeshSnapRadius = 5f;
     private const float DestinationSampleRadius = 4f;
+    private const float DestinationRepathThreshold = 0.35f;
+    private const float PlayerMovedRepathThreshold = 0.45f;
     private const float StuckVelocityThreshold = 0.08f;
-    private const float StuckCheckDelay = 1.25f;
-
+    private const float StuckCheckDelay = 0.75f;
     // Statyczny event, który powiadomi Spawner o śmierci wroga.
     public static System.Action OnEnemyDied;
     public event Action<EnemyAI> Died;
@@ -31,12 +32,25 @@ public class EnemyAI : MonoBehaviour
     [SerializeField] private float attackCooldown = 1.5f;
     [SerializeField] private float fallbackDamageDelay = 0.25f;
     [SerializeField] private bool damageByAnimationEvent = false;
+    [SerializeField] private float attackStartRangeMultiplier = 0.72f;
 
     [Header("Movement")]
     [SerializeField] private float aiTickRate = 0.15f;
-    [SerializeField] private float stoppingDistanceMultiplier = 0.85f;
+    [SerializeField] private float chasingTickRate = 0.06f;
+    [SerializeField] private float closeCombatTickRate = 0.05f;
     [SerializeField] private float rotationSpeed = 18f;
     [SerializeField] private bool rotateTowardsMovementWhenChasing = true;
+    [SerializeField] private float destinationRefreshDistance = DestinationRepathThreshold;
+    [SerializeField] private float minDestinationRefreshInterval = 0.06f;
+    [SerializeField] private float animatorSpeedSmoothing = 18f;
+    [SerializeField] private ObstacleAvoidanceType obstacleAvoidanceType = ObstacleAvoidanceType.MedQualityObstacleAvoidance;
+    [SerializeField] private bool useAttackSlots = false;
+    [SerializeField] private float agentRadius = 0.45f;
+
+    [Header("Rotation")]
+    [SerializeField] private float rotationDeadZoneAngle = 3f;
+    [SerializeField] private float maxTurnSpeed = 900f;
+    [SerializeField] private float lookDirectionSmoothing = 35f;
 
     [Header("Animator Parameters")]
     [SerializeField] private string speedParameter = "Speed";
@@ -78,6 +92,13 @@ public class EnemyAI : MonoBehaviour
     private float _stuckTimer;
     private float _fallbackMoveSpeed;
     private bool _warnedOffNavMesh;
+    private Vector3 _lastDestination;
+    private Vector3 _lastPlayerPositionForDestination;
+    private float _lastDestinationSetTime;
+    private bool _hasLastDestination;
+    private Vector3 _smoothedLookDirection;
+    private float _animatorMoveSpeed;
+    private bool _initializedAfterSpawn;
 
     private void Awake()
     {
@@ -95,10 +116,13 @@ public class EnemyAI : MonoBehaviour
             enemyVoiceAudio = GetComponentInChildren<EnemyVoiceAudio>();
 
         _agent.speed = speed;
-        _agent.stoppingDistance = attackRange * stoppingDistanceMultiplier;
+        _agent.radius = Mathf.Max(0.1f, agentRadius);
+        _agent.stoppingDistance = GetChaseStoppingDistance();
         _agent.angularSpeed = 720f;
-        _agent.acceleration = 30f;
-        _agent.autoBraking = true;
+        _agent.acceleration = Mathf.Max(30f, speed * 10f);
+        _agent.autoBraking = false;
+        _agent.autoRepath = true;
+        _agent.obstacleAvoidanceType = obstacleAvoidanceType;
         _agent.avoidancePriority = UnityEngine.Random.Range(30, 70);
 
         // Obrót robimy ręcznie w RotateTowardsTarget(), więc NavMeshAgent nie obraca modelu sam.
@@ -110,27 +134,53 @@ public class EnemyAI : MonoBehaviour
 
     private void Start()
     {
-        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        ResolvePlayerTarget();
 
-        if (playerObj == null)
+        if (_player == null)
         {
             Debug.LogError($"[{name}] Nie znaleziono gracza. Upewnij się, że Player ma tag 'Player'.");
             enabled = false;
             return;
         }
 
-        _player = playerObj.transform;
-        _playerStats = playerObj.GetComponent<PlayerStats>();
-        ResolveAttackSlotManager();
         TrySnapAgentToNavMesh();
+
+        if (!_initializedAfterSpawn)
+            _aiTickTimer = UnityEngine.Random.Range(0f, Mathf.Max(0.01f, aiTickRate));
+
         enemyVoiceAudio?.StartVoiceLoop();
 
         if (_playerStats == null)
             Debug.LogError($"[{name}] Obiekt Player nie ma komponentu PlayerStats.");
     }
 
+    public void InitializeAfterSpawn(Transform target)
+    {
+        if (_isDead)
+            return;
+
+        ResolvePlayerTarget(target);
+        TrySnapAgentToNavMesh();
+
+        _initializedAfterSpawn = true;
+        _hasTarget = _player != null;
+        _isAttacking = false;
+        _stuckTimer = 0f;
+        _hasLastDestination = false;
+        _aiTickTimer = GetEffectiveTickRate();
+
+        if (_hasTarget)
+            ChasePlayer();
+    }
+
     private void Update()
     {
+        if (!_isDead && _player == null)
+            ResolvePlayerTarget();
+
+        if (!_isDead && useAttackSlots && attackSlotManager == null)
+            ResolveAttackSlotManager();
+
         if (_isDead || _player == null || IsGameplayPaused())
             return;
 
@@ -142,8 +192,9 @@ public class EnemyAI : MonoBehaviour
 
         MonitorAndRecoverIfStuck();
 
+        float effectiveTickRate = GetEffectiveTickRate();
         _aiTickTimer += Time.deltaTime;
-        if (_aiTickTimer >= aiTickRate)
+        if (_aiTickTimer >= effectiveTickRate)
         {
             _aiTickTimer = 0f;
             HandleAILogic();
@@ -160,7 +211,9 @@ public class EnemyAI : MonoBehaviour
         if (!_hasTarget && distance <= detectionRange)
             _hasTarget = true;
 
-        if (_hasTarget && distance > loseTargetRange)
+        float effectiveLoseTargetRange = Mathf.Max(loseTargetRange, detectionRange);
+
+        if (_hasTarget && distance > effectiveLoseTargetRange)
         {
             _hasTarget = false;
             ReleaseAttackSlot();
@@ -175,10 +228,9 @@ public class EnemyAI : MonoBehaviour
             return;
         }
 
-        if (distance <= attackRange)
+        if (distance <= Mathf.Max(GetAttackStartRange(), GetChaseStoppingDistance()))
         {
-            StopMoving();
-            TryAttack();
+            HandleCloseCombat();
             return;
         }
 
@@ -195,28 +247,61 @@ public class EnemyAI : MonoBehaviour
             return;
         }
 
-        _isAttacking = false;
-        _agent.stoppingDistance = attackRange * stoppingDistanceMultiplier;
-        _agent.isStopped = false;
+        ChasePlayer(false);
+    }
 
-        if (attackSlotManager != null)
+    private void ChasePlayer(bool pressIntoMelee)
+    {
+        if (!_agent.enabled || !_agent.isOnNavMesh)
+        {
+            if (!TrySnapAgentToNavMesh())
+                DirectChasePlayer();
+
+            return;
+        }
+
+        _isAttacking = false;
+        _agent.stoppingDistance = pressIntoMelee ? 0.1f : GetChaseStoppingDistance();
+        _agent.isStopped = false;
+        if (useAttackSlots)
+            ResolveAttackSlotManager();
+
+        if (!pressIntoMelee && ShouldUseAttackSlot())
         {
             Vector3 slotPosition = attackSlotManager.GetOrAssignSlotPosition(
                 this,
                 _player,
-                Mathf.Max(0.1f, _agent.stoppingDistance)
+                Mathf.Max(0.45f, _agent.stoppingDistance)
             );
 
             SetDestinationOnNavMesh(slotPosition);
+            return;
         }
-        else if (NavMesh.SamplePosition(_player.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
+
+        if (useAttackSlots)
+            ReleaseAttackSlot();
+
+        SetPlayerDestination(pressIntoMelee);
+    }
+
+    private void SetPlayerDestination(bool forceRefresh = false)
+    {
+        if (_player == null)
+            return;
+
+        if (NavMesh.SamplePosition(_player.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
         {
-            SetDestinationOnNavMesh(hit.position);
+            SetDestinationOnNavMesh(hit.position, forceRefresh);
         }
         else
         {
-            SetDestinationOnNavMesh(_player.position);
+            SetDestinationOnNavMesh(_player.position, forceRefresh);
         }
+    }
+
+    private bool ShouldUseAttackSlot()
+    {
+        return useAttackSlots && attackSlotManager != null && _player != null;
     }
 
     private bool TrySnapAgentToNavMesh()
@@ -252,10 +337,10 @@ public class EnemyAI : MonoBehaviour
             return;
 
         Vector3 moveDirection = direction.normalized;
-        transform.position += moveDirection * speed * Time.deltaTime;
+        Vector3 nextPosition = transform.position + moveDirection * speed * Time.deltaTime;
 
-        Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
+        transform.position = nextPosition;
+        RotateTowardsDirection(moveDirection);
 
         _fallbackMoveSpeed = speed;
 
@@ -263,7 +348,7 @@ public class EnemyAI : MonoBehaviour
             _animator.SetFloat(speedParameter, _fallbackMoveSpeed);
     }
 
-    private void SetDestinationOnNavMesh(Vector3 destination)
+    private void SetDestinationOnNavMesh(Vector3 destination, bool forceRefresh = false)
     {
         if (!_agent.enabled || !_agent.isOnNavMesh)
         {
@@ -275,8 +360,21 @@ public class EnemyAI : MonoBehaviour
 
         if (NavMesh.SamplePosition(destination, out NavMeshHit hit, DestinationSampleRadius, NavMesh.AllAreas))
         {
-            if (!_agent.SetDestination(hit.position))
+            Vector3 finalDestination = hit.position;
+
+            if (!forceRefresh && CanReuseCurrentDestination(finalDestination))
+                return;
+
+            if (!TrySetCompleteDestination(finalDestination))
+            {
                 RecoverAgentPath();
+                return;
+            }
+
+            _lastDestination = finalDestination;
+            _lastPlayerPositionForDestination = _player != null ? _player.position : finalDestination;
+            _lastDestinationSetTime = Time.time;
+            _hasLastDestination = true;
 
             return;
         }
@@ -316,12 +414,47 @@ public class EnemyAI : MonoBehaviour
             return;
 
         _agent.ResetPath();
+        _hasLastDestination = false;
         ReleaseAttackSlot();
 
         if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, NavMeshSnapRadius, NavMesh.AllAreas))
             _agent.Warp(hit.position);
 
         _aiTickTimer = aiTickRate;
+    }
+
+    private float GetEffectiveTickRate()
+    {
+        float baseTickRate = Mathf.Max(0.01f, aiTickRate);
+
+        if (!_hasTarget || _player == null)
+            return baseTickRate;
+
+        float distance = GetFlatDistanceToPlayer();
+
+        if (distance <= attackRange + 0.8f)
+            return Mathf.Min(baseTickRate, Mathf.Max(0.01f, closeCombatTickRate));
+
+        return Mathf.Min(baseTickRate, Mathf.Max(0.01f, chasingTickRate));
+    }
+
+    private bool TrySetCompleteDestination(Vector3 destination)
+    {
+        return _agent.SetDestination(destination);
+    }
+
+    private float GetAttackStartRange()
+    {
+        return Mathf.Clamp(
+            attackRange * Mathf.Clamp01(attackStartRangeMultiplier),
+            0.55f,
+            Mathf.Max(0.55f, attackRange)
+        );
+    }
+
+    private float GetChaseStoppingDistance()
+    {
+        return Mathf.Max(0.8f, attackRange - 0.35f);
     }
 
     private void StopMoving()
@@ -331,9 +464,74 @@ public class EnemyAI : MonoBehaviour
 
         _agent.isStopped = true;
         _agent.ResetPath();
+        _hasLastDestination = false;
     }
 
-    private void TryAttack()
+    private void StopForAttack()
+    {
+        if (!_agent.enabled || !_agent.isOnNavMesh)
+            return;
+
+        _agent.isStopped = true;
+        _agent.velocity = Vector3.zero;
+    }
+
+    private bool CanReuseCurrentDestination(Vector3 nextDestination)
+    {
+        if (!_hasLastDestination || (!_agent.hasPath && !_agent.pathPending))
+            return false;
+
+        if (_player != null)
+        {
+            Vector3 playerDelta = _player.position - _lastPlayerPositionForDestination;
+            playerDelta.y = 0f;
+
+            if (playerDelta.sqrMagnitude > PlayerMovedRepathThreshold * PlayerMovedRepathThreshold)
+                return false;
+        }
+
+        if (_agent.hasPath && !_agent.pathPending && _agent.velocity.sqrMagnitude < 0.01f)
+            return false;
+
+        float refreshDistance = Mathf.Max(DestinationRepathThreshold, destinationRefreshDistance);
+        if ((nextDestination - _lastDestination).sqrMagnitude <= refreshDistance * refreshDistance)
+            return true;
+
+        float refreshInterval = Mathf.Max(0f, minDestinationRefreshInterval);
+        return refreshInterval > 0f && Time.time - _lastDestinationSetTime < refreshInterval;
+    }
+
+    private void HandleCloseCombat()
+    {
+        RotateTowardsPlayer();
+
+        float distance = GetFlatDistanceToPlayer();
+
+        if (distance > attackRange)
+        {
+            ChasePlayer(true);
+            return;
+        }
+
+        if (_isAttacking)
+        {
+            StopForAttack();
+            return;
+        }
+
+        if (Time.time >= _nextAttackTime)
+        {
+            StopForAttack();
+            StartAttack();
+            return;
+        }
+
+        // Cooldown nie powinien zamrażać zombie. Przeciwnik dociska bliżej,
+        // zamiast stać na zewnętrznym slocie i czekać.
+        ChasePlayer(true);
+    }
+
+    private void StartAttack()
     {
         if (IsGameplayPaused())
             return;
@@ -560,6 +758,29 @@ public class EnemyAI : MonoBehaviour
         OnEnemyDied?.Invoke();
     }
 
+    private void ResolvePlayerTarget(Transform explicitTarget = null)
+    {
+        if (explicitTarget != null)
+            _player = explicitTarget;
+
+        if (_player == null)
+        {
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null)
+                _player = playerObj.transform;
+        }
+
+        if (_playerStats == null && _player != null)
+        {
+            _playerStats = _player.GetComponent<PlayerStats>();
+            if (_playerStats == null)
+                _playerStats = _player.GetComponentInParent<PlayerStats>();
+        }
+
+        if (useAttackSlots)
+            ResolveAttackSlotManager();
+    }
+
     private void ResolveAttackSlotManager()
     {
         if (attackSlotManager != null || _player == null)
@@ -570,7 +791,7 @@ public class EnemyAI : MonoBehaviour
 
     private void ReleaseAttackSlot()
     {
-        if (attackSlotManager != null)
+        if (useAttackSlots && attackSlotManager != null)
             attackSlotManager.ReleaseSlot(this);
     }
 
@@ -599,9 +820,21 @@ public class EnemyAI : MonoBehaviour
         float currentSpeed = _fallbackMoveSpeed;
 
         if (_agent.enabled && _agent.isOnNavMesh)
+        {
             currentSpeed = _agent.velocity.magnitude;
 
-        _animator.SetFloat(speedParameter, currentSpeed);
+            if (_agent.hasPath || _agent.pathPending)
+                currentSpeed = Mathf.Max(currentSpeed, _agent.desiredVelocity.magnitude);
+        }
+
+        float smoothing = Mathf.Max(0f, animatorSpeedSmoothing);
+
+        if (smoothing > 0f)
+            _animatorMoveSpeed = Mathf.MoveTowards(_animatorMoveSpeed, currentSpeed, smoothing * Time.deltaTime);
+        else
+            _animatorMoveSpeed = currentSpeed;
+
+        _animator.SetFloat(speedParameter, _animatorMoveSpeed);
     }
 
     private float GetFlatDistanceToPlayer()
@@ -637,45 +870,63 @@ public class EnemyAI : MonoBehaviour
         if (_player == null)
             return;
 
-        Vector3 direction;
+        Vector3 direction = Vector3.zero;
 
         bool useAgentVelocity =
             rotateTowardsMovementWhenChasing &&
             _agent.enabled &&
             _agent.isOnNavMesh &&
             !_agent.isStopped &&
-            _agent.velocity.sqrMagnitude > 0.05f;
+            (_agent.desiredVelocity.sqrMagnitude > 0.05f || _agent.velocity.sqrMagnitude > 0.05f);
 
         if (useAgentVelocity)
-            direction = _agent.velocity;
-        else
+            direction = _agent.desiredVelocity.sqrMagnitude > 0.05f ? _agent.desiredVelocity : _agent.velocity;
+
+        if (direction.sqrMagnitude < 0.001f)
             direction = _player.position - transform.position;
 
+        RotateTowardsDirection(direction);
+    }
+
+    private void RotateTowardsPlayer()
+    {
+        RotateTowardsDirection(GetFlatDirectionToPlayer());
+    }
+
+    private void RotateTowardsDirection(Vector3 direction)
+    {
         direction.y = 0f;
 
         if (direction.sqrMagnitude < 0.001f)
             return;
 
-        Quaternion targetRotation = Quaternion.LookRotation(direction.normalized);
-        transform.rotation = Quaternion.Slerp(
-            transform.rotation,
-            targetRotation,
-            Time.deltaTime * rotationSpeed
-        );
-    }
+        Vector3 targetDirection = direction.normalized;
 
-    private void RotateTowardsPlayer()
-    {
-        Vector3 direction = GetFlatDirectionToPlayer();
+        if (_smoothedLookDirection.sqrMagnitude < 0.001f)
+            _smoothedLookDirection = transform.forward;
 
-        if (direction.sqrMagnitude < 0.001f)
+        float blend = 1f - Mathf.Exp(-Mathf.Max(0.01f, lookDirectionSmoothing) * Time.deltaTime);
+        _smoothedLookDirection = Vector3.Slerp(_smoothedLookDirection, targetDirection, blend);
+        _smoothedLookDirection.y = 0f;
+
+        if (_smoothedLookDirection.sqrMagnitude < 0.001f)
             return;
 
-        Quaternion targetRotation = Quaternion.LookRotation(direction);
-        transform.rotation = Quaternion.Slerp(
+        Quaternion targetRotation = Quaternion.LookRotation(_smoothedLookDirection.normalized, Vector3.up);
+        float angle = Quaternion.Angle(transform.rotation, targetRotation);
+
+        float deadZoneAngle = Mathf.Max(3f, rotationDeadZoneAngle);
+        if (angle < deadZoneAngle)
+            return;
+
+        float turnSpeed = maxTurnSpeed > 0f
+            ? maxTurnSpeed
+            : Mathf.Max(1f, rotationSpeed * 60f);
+
+        transform.rotation = Quaternion.RotateTowards(
             transform.rotation,
             targetRotation,
-            Time.deltaTime * rotationSpeed
+            turnSpeed * Time.deltaTime
         );
     }
 

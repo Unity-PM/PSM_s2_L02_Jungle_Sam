@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
@@ -15,6 +17,7 @@ public class DeathUIController : MonoBehaviour
 
     [Header("Input")]
     [SerializeField] private bool manageCursorWhileOpen = true;
+    [SerializeField] private string mainMenuSceneName = "Scene_MainMenu";
 
     private Action _respawnCallback;
     private bool _isOpen;
@@ -50,12 +53,23 @@ public class DeathUIController : MonoBehaviour
             respawnButton.onClick.RemoveListener(HandleRespawnClicked);
             respawnButton.onClick.AddListener(HandleRespawnClicked);
         }
+
+        if (exitButton != null)
+        {
+            exitButton.onClick.RemoveListener(ExitToMainMenu);
+            exitButton.onClick.AddListener(ExitToMainMenu);
+        }
     }
 
     private void OnDisable()
     {
         if (respawnButton != null)
             respawnButton.onClick.RemoveListener(HandleRespawnClicked);
+
+        if (exitButton != null)
+            exitButton.onClick.RemoveListener(ExitToMainMenu);
+
+        GameplayAudioSilencer.Unmute(this);
     }
 
     [ContextMenu("Auto Wire")]
@@ -94,6 +108,7 @@ public class DeathUIController : MonoBehaviour
             Cursor.lockState = CursorLockMode.None;
         }
 
+        GameplayAudioSilencer.Mute(this);
         _isOpen = true;
     }
 
@@ -115,6 +130,7 @@ public class DeathUIController : MonoBehaviour
             Cursor.lockState = _previousCursorLockMode;
         }
 
+        GameplayAudioSilencer.Unmute(this);
         _isOpen = false;
     }
 
@@ -128,6 +144,24 @@ public class DeathUIController : MonoBehaviour
         _respawnCallback?.Invoke();
     }
 
+    public void ExitToMainMenu()
+    {
+        Time.timeScale = 1f;
+        SaveLoadContext.Clear();
+        GameplayAudioSilencer.Unmute(this);
+
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+
+        if (string.IsNullOrWhiteSpace(mainMenuSceneName))
+        {
+            Debug.LogWarning("DeathUIController cannot return to main menu because mainMenuSceneName is empty.", this);
+            return;
+        }
+
+        SceneManager.LoadScene(mainMenuSceneName);
+    }
+
     private Button FindButton(string childName)
     {
         Button[] buttons = GetComponentsInChildren<Button>(true);
@@ -139,5 +173,52 @@ public class DeathUIController : MonoBehaviour
         }
 
         return null;
+    }
+}
+
+public static class GameplayAudioSilencer
+{
+    private static readonly HashSet<object> Owners = new HashSet<object>();
+    private static bool _previousListenerPause;
+    private static float _previousListenerVolume = 1f;
+
+    public static void Mute(object owner)
+    {
+        if (owner == null)
+            return;
+
+        if (Owners.Count == 0)
+        {
+            _previousListenerPause = AudioListener.pause;
+            _previousListenerVolume = AudioListener.volume;
+        }
+
+        Owners.Add(owner);
+        ApplyMutedState();
+    }
+
+    public static void Unmute(object owner)
+    {
+        if (owner == null)
+            return;
+
+        Owners.Remove(owner);
+
+        if (Owners.Count == 0)
+            RestorePreviousState();
+        else
+            ApplyMutedState();
+    }
+
+    private static void ApplyMutedState()
+    {
+        AudioListener.pause = true;
+        AudioListener.volume = 0f;
+    }
+
+    private static void RestorePreviousState()
+    {
+        AudioListener.pause = _previousListenerPause;
+        AudioListener.volume = _previousListenerVolume;
     }
 }

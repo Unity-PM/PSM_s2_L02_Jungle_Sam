@@ -54,6 +54,7 @@ public class ObjectiveOnStoryPickup : MonoBehaviour, IEncounterResettable
         if (_hud != null)
         {
             _hud.SetObjective(objectiveText, secondaryObjectiveText);
+            GameplaySaveSystem.SaveObjective(objectiveText, secondaryObjectiveText);
 
             if (showNotification)
                 _hud.ShowNotification(notificationText);

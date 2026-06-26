@@ -78,14 +78,16 @@ public class LocalJsonSaveGameService : ISaveGameService
         {
             userId = userId ?? string.Empty,
             sceneName = string.IsNullOrWhiteSpace(gameplaySceneName) ? string.Empty : gameplaySceneName.Trim(),
-            checkpointId = "Checkpoint_Start_Boat",
+            checkpointId = string.Empty,
             missionStage = "DockStart",
             currentObjective = "Znajdź źródło sygnału",
+            secondaryObjective = "Przedostań się przez nabrzeże",
             health = 100,
-            armor = 0,
+            armor = 100,
             activeWeaponId = string.Empty,
             ammo762 = 120,
             ammo9mm = 48,
+            startedEncounters = new List<string>(),
             completedEncounters = new List<string>(),
             collectedStoryPickups = new List<string>(),
             savedAtUtc = DateTime.UtcNow.ToString("o")
@@ -123,9 +125,17 @@ public class LocalJsonSaveGameService : ISaveGameService
         data.userId ??= string.Empty;
         data.sceneName ??= string.Empty;
         data.checkpointId ??= string.Empty;
+        if (data.checkpointId == "Checkpoint_Start_Boat")
+            data.checkpointId = string.Empty;
+        else if (data.checkpointId == "Checkpoint_Start")
+            data.checkpointId = "Checkpoint_AfterDockArena";
+        else if (data.checkpointId == "Checkpoint")
+            data.checkpointId = "Checkpoint_Church";
         data.missionStage ??= string.Empty;
         data.currentObjective ??= string.Empty;
+        data.secondaryObjective ??= string.Empty;
         data.activeWeaponId ??= string.Empty;
+        data.startedEncounters ??= new List<string>();
         data.completedEncounters ??= new List<string>();
         data.collectedStoryPickups ??= new List<string>();
         data.savedAtUtc ??= string.Empty;

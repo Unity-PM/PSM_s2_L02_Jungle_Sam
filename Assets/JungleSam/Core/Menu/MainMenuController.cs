@@ -123,6 +123,7 @@ public class MainMenuController : MonoBehaviour
 
         SaveGameData newSave = _saveService.CreateNewSave(user.userId, gameplaySceneName);
         _saveService.SaveGame(newSave);
+        SaveLoadContext.SetPendingSave(newSave);
 
         if (showMissionIntroOnNewGame && missionIntroController != null)
         {
@@ -159,6 +160,7 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
+        SaveLoadContext.SetPendingSave(save);
         LoadGameplayScene(string.IsNullOrWhiteSpace(save.sceneName) ? gameplaySceneName : save.sceneName);
     }
 

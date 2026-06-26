@@ -33,7 +33,8 @@ public class EnemyAttackSlotManager : MonoBehaviour
             _reservations[enemyInstanceId] = reservation;
         }
 
-        if (Time.time - reservation.LastUpdateTime >= slotRecheckInterval)
+        float effectiveRecheckInterval = Mathf.Clamp(slotRecheckInterval, 0.1f, 2f);
+        if (Time.time - reservation.LastUpdateTime >= effectiveRecheckInterval)
             UpdateReservationPosition(reservation, target, preferredDistance);
 
         return reservation.LastAssignedPosition;
@@ -65,6 +66,7 @@ public class EnemyAttackSlotManager : MonoBehaviour
             SlotIndex = slotIndex,
             RingIndex = ringIndex,
             LastAssignedPosition = transform.position,
+            HasAssignedPosition = false,
             LastUpdateTime = -slotRecheckInterval
         };
 
@@ -108,12 +110,42 @@ public class EnemyAttackSlotManager : MonoBehaviour
     {
         Vector3 rawPosition = CalculateSlotPosition(reservation, target, preferredDistance);
 
-        if (NavMesh.SamplePosition(rawPosition, out NavMeshHit hit, navMeshSampleRadius, NavMesh.AllAreas))
+        float sampleRadius = Mathf.Max(0.05f, navMeshSampleRadius);
+
+        if (NavMesh.SamplePosition(rawPosition, out NavMeshHit hit, sampleRadius, NavMesh.AllAreas))
+        {
             reservation.LastAssignedPosition = hit.position;
+            reservation.HasAssignedPosition = true;
+        }
+        else if (reservation.HasAssignedPosition && IsUsableNavMeshPosition(reservation.LastAssignedPosition))
+        {
+            // Keep the current slot instead of collapsing back onto the player.
+        }
+        else if (IsFinitePosition(rawPosition))
+        {
+            reservation.LastAssignedPosition = rawPosition;
+            reservation.HasAssignedPosition = true;
+        }
         else
+        {
             reservation.LastAssignedPosition = target.position;
+            reservation.HasAssignedPosition = true;
+        }
 
         reservation.LastUpdateTime = Time.time;
+    }
+
+    private static bool IsFinitePosition(Vector3 position)
+    {
+        return !float.IsNaN(position.x) && !float.IsInfinity(position.x) &&
+            !float.IsNaN(position.y) && !float.IsInfinity(position.y) &&
+            !float.IsNaN(position.z) && !float.IsInfinity(position.z);
+    }
+
+    private static bool IsUsableNavMeshPosition(Vector3 position)
+    {
+        return IsFinitePosition(position) &&
+            NavMesh.SamplePosition(position, out _, 0.25f, NavMesh.AllAreas);
     }
 
     private Vector3 CalculateSlotPosition(SlotReservation reservation, Transform target, float preferredDistance)
@@ -178,6 +210,7 @@ public class EnemyAttackSlotManager : MonoBehaviour
         public int SlotIndex;
         public int RingIndex;
         public Vector3 LastAssignedPosition;
+        public bool HasAssignedPosition;
         public float LastUpdateTime;
     }
 }

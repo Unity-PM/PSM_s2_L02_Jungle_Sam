@@ -91,6 +91,8 @@ public class PlayerDeathHandler : MonoBehaviour
         else if (playerHealth != null)
             playerHealth.RestoreFullHealth();
 
+        GameplaySaveSystem.RestoreCurrentWorldState();
+
         // TODO: Hook minimum ammo refill here after the ammo safety floor system exists.
 
         if (deathUIController != null)

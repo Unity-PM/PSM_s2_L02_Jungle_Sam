@@ -87,12 +87,16 @@ public class PauseMenuController : MonoBehaviour
 
             _boundPauseAction = null;
         }
+
+        GameplayAudioSilencer.Unmute(this);
     }
 
     private void OnDestroy()
     {
         if (_isPaused && pauseOnOpen)
             RestoreTimeScale();
+
+        GameplayAudioSilencer.Unmute(this);
 
         if (_isPaused)
             IsPaused = false;
@@ -161,6 +165,8 @@ public class PauseMenuController : MonoBehaviour
         if (pauseOnOpen)
             PauseTimeScale();
 
+        GameplayAudioSilencer.Mute(this);
+
         if (unlockCursorOnPause)
         {
             Cursor.visible = true;
@@ -188,6 +194,8 @@ public class PauseMenuController : MonoBehaviour
 
         if (pauseOnOpen)
             RestoreTimeScale();
+
+        GameplayAudioSilencer.Unmute(this);
 
         if (playerControlLock != null)
             playerControlLock.SetLocked(false);
@@ -217,6 +225,8 @@ public class PauseMenuController : MonoBehaviour
         if (pauseOnOpen)
             RestoreTimeScale();
 
+        GameplayAudioSilencer.Unmute(this);
+
         if (playerControlLock != null)
             playerControlLock.SetLocked(false);
 
@@ -241,8 +251,12 @@ public class PauseMenuController : MonoBehaviour
 
     public void ExitToMenu()
     {
+        GameplaySaveSystem.SaveCurrentProgress("exit to menu");
+
         if (pauseOnOpen)
             RestoreTimeScale();
+
+        GameplayAudioSilencer.Unmute(this);
 
         if (playerControlLock != null)
             playerControlLock.SetLocked(false);

@@ -60,5 +60,11 @@ MonoBehaviour:
   timeBetweenWaves: 5
   spawnPoints:
   - {fileID: 0}
-  navMeshSampleRadius: 2
+  navMeshSampleRadius: 8
+  reachableSpawnSearchRadius: 12
+  reachableSpawnSearchSteps: 16
+  preferReachableSpawnPosition: 1
+  avoidCrowdedSpawnPositions: 1
+  spawnClearanceRadius: 1.4
+  spawnSearchSampleRadius: 1.5
   waveText: {fileID: 0}

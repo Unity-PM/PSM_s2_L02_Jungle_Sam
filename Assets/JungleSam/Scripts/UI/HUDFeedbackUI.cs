@@ -5,6 +5,7 @@ using TMPro;
 public class HUDFeedbackUI : MonoBehaviour
 {
     [Header("Hit Marker")]
+    [SerializeField] private bool showHitMarker = false;
     [SerializeField] private Graphic hitMarkerGraphic;
     [SerializeField] private Color hitMarkerColor = Color.white;
     [SerializeField] private float hitMarkerDuration = 0.12f;
@@ -12,8 +13,8 @@ public class HUDFeedbackUI : MonoBehaviour
 
     [Header("Damage Flash")]
     [SerializeField] private Graphic damageFlashGraphic;
-    [SerializeField] private Color damageFlashColor = new Color(1f, 0f, 0f, 0.45f);
-    [SerializeField] private float damageFlashDuration = 0.35f;
+    [SerializeField] private Color damageFlashColor = new Color(1f, 0f, 0f, 0.58f);
+    [SerializeField] private float damageFlashDuration = 0.42f;
 
     private RectTransform _hitMarkerRect;
     private Vector3 _hitMarkerBaseScale = Vector3.one;
@@ -39,7 +40,7 @@ public class HUDFeedbackUI : MonoBehaviour
         if (damageFlashGraphic == null)
             damageFlashGraphic = CreateDamageFlash();
 
-        if (hitMarkerGraphic == null)
+        if (showHitMarker && hitMarkerGraphic == null)
             hitMarkerGraphic = CreateHitMarker();
     }
 
@@ -63,6 +64,9 @@ public class HUDFeedbackUI : MonoBehaviour
 
     private void OnEnemyHit(WeaponBase weapon, EnemyAI enemy)
     {
+        if (!showHitMarker)
+            return;
+
         _hitMarkerTimer = hitMarkerDuration;
 
         if (_hitMarkerRect != null)
@@ -71,7 +75,9 @@ public class HUDFeedbackUI : MonoBehaviour
 
     private void OnPlayerDamaged(PlayerStats playerStats, float damageAmount)
     {
+        EnsureGeneratedElements();
         _damageFlashTimer = damageFlashDuration;
+        SetGraphicAlpha(damageFlashGraphic, damageFlashColor.a, damageFlashColor);
     }
 
     private void UpdateHitMarker()
@@ -116,6 +122,9 @@ public class HUDFeedbackUI : MonoBehaviour
     {
         if (graphic == null)
             return;
+
+        if (alpha > 0f && !graphic.gameObject.activeSelf)
+            graphic.gameObject.SetActive(true);
 
         baseColor.a = alpha;
         graphic.color = baseColor;

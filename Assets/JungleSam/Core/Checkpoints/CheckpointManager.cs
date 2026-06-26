@@ -46,6 +46,7 @@ public class CheckpointManager : MonoBehaviour
 
         _currentCheckpoint = checkpoint;
         Debug.Log($"Checkpoint activated: {checkpoint.CheckpointId}");
+        GameplaySaveSystem.SaveCheckpoint(checkpoint);
     }
 
     public void RespawnPlayer(GameObject player)
@@ -98,6 +99,10 @@ public class CheckpointManager : MonoBehaviour
         }
 
         player.transform.SetPositionAndRotation(position, rotation);
+
+        PlayerController playerController = player.GetComponent<PlayerController>();
+        if (playerController != null)
+            playerController.ResetLook(rotation);
 
         if (characterController != null)
             characterController.enabled = characterControllerWasEnabled;

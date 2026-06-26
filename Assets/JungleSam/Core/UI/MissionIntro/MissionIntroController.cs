@@ -102,6 +102,7 @@ public class MissionIntroController : MonoBehaviour
 
     public void BackToMainMenu()
     {
+        SaveLoadContext.Clear();
         Hide();
 
         if (mainMenuController != null)

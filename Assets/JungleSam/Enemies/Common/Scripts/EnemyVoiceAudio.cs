@@ -6,6 +6,7 @@ using UnityEngine;
 public class EnemyVoiceAudio : MonoBehaviour
 {
     private static int _activeVoices;
+    private static Transform _cachedListenerTransform;
 
     [Header("Clips")]
     [SerializeField] private AudioClip[] voiceClips;
@@ -25,7 +26,6 @@ public class EnemyVoiceAudio : MonoBehaviour
     private AudioSource _audioSource;
     private Coroutine _voiceLoopRoutine;
     private Coroutine _voiceReleaseRoutine;
-    private Transform _listenerTransform;
     private bool _isDead;
     private bool _voiceCounted;
 
@@ -176,16 +176,16 @@ public class EnemyVoiceAudio : MonoBehaviour
 
     private Transform GetListenerTransform()
     {
-        if (_listenerTransform != null)
-            return _listenerTransform;
+        if (_cachedListenerTransform != null)
+            return _cachedListenerTransform;
 
 #if UNITY_2023_1_OR_NEWER
         AudioListener listener = FindFirstObjectByType<AudioListener>();
 #else
         AudioListener listener = FindObjectOfType<AudioListener>();
 #endif
-        _listenerTransform = listener != null ? listener.transform : null;
-        return _listenerTransform;
+        _cachedListenerTransform = listener != null ? listener.transform : null;
+        return _cachedListenerTransform;
     }
 
     private void ConfigureAudioSource()

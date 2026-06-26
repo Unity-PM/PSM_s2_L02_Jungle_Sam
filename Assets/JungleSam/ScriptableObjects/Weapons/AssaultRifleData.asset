@@ -16,12 +16,12 @@ MonoBehaviour:
   weaponPrefab: {fileID: 0}
   ammoCategory: 1
   damage: 20
-  fireRate: 0.1
+  fireRate: 0.085
   range: 100
   maxAmmo: 30
   maxReserveAmmo: 240
   reloadTime: 3.7
-  shootAnimationDuration: 0.18
+  shootAnimationDuration: 0.15
   isAutomatic: 1
   muzzleFlashPrefab: {fileID: 100000, guid: f27bdbe0c5454719a57708f9adba13a5, type: 3}
   muzzleFlashSize: {x: 0.32, y: 0.18}

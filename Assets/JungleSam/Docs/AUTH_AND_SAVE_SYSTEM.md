@@ -65,7 +65,7 @@ Domyślny save startuje od:
 - `missionStage = DockStart`
 - `currentObjective = Znajdź źródło sygnału`
 - `health = 100`
-- `armor = 0`
+- `armor = 100`
 - `ammo762 = 120`
 - `ammo9mm = 48`
 
@@ -76,7 +76,16 @@ Po zalogowaniu `MainMenuController` ustawia:
 - `PlayerNameText = OPERATOR: {username}`
 - `ContinueButton.interactable = saveService.HasSave(userId)`
 
-`ContinueGame()` sprawdza zapis użytkownika. Jeśli istnieje, odczytuje JSON i ładuje scenę z save'a. Jeśli pliku nie ma, pokazuje komunikat `Brak zapisu gry`.
+`ContinueGame()` sprawdza zapis użytkownika. Jeśli istnieje, odczytuje JSON, przekazuje go do `SaveLoadContext` i ładuje scenę z save'a. Jeśli pliku nie ma, pokazuje komunikat `Brak zapisu gry`.
+
+Po załadowaniu gameplayu `GameplaySaveLoader` zużywa `SaveLoadContext.PendingSave` i aplikuje podstawowy stan:
+
+- checkpoint przez `CheckpointManager.RespawnPlayer(playerRoot)`,
+- zdrowie przez `PlayerHealth`,
+- pancerz przez `PlayerStats`,
+- tekst celu przez `UIManager` / `GameplayHUDController`.
+
+Pola broni, amunicji, ukończonych encounterów i zebranych pickupów są zapisane w modelu danych, ale ich pełne odtworzenie wymaga osobnej integracji z systemami gameplayu.
 
 ## Przygotowanie pod backend
 

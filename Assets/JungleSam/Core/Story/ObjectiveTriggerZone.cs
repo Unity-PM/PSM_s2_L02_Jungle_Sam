@@ -61,6 +61,7 @@ public class ObjectiveTriggerZone : MonoBehaviour
         }
 
         _hud.SetObjective(objectiveText, secondaryObjectiveText);
+        GameplaySaveSystem.SaveObjective(objectiveText, secondaryObjectiveText);
 
         if (showNotification)
             _hud.ShowNotification(notificationText);

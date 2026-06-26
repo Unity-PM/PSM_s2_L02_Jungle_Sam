@@ -51,6 +51,8 @@ public class MutantStalkerAI : MonoBehaviour, IDamageable
     [SerializeField] private float rotationSpeed = 9f;
     [SerializeField] private float rotationDeadZoneAngle = 3f;
     [SerializeField] private float immediateRotationAngle = 45f;
+    [SerializeField] private float destinationRefreshDistance = 0.45f;
+    [SerializeField] private float minDestinationRefreshInterval = 0.25f;
     [FormerlySerializedAs("rotateTowardsMovementWhenChasing")]
     [SerializeField] private bool rotateToMovementWhileChasing = true;
 
@@ -73,6 +75,9 @@ public class MutantStalkerAI : MonoBehaviour, IDamageable
     private bool _isRaging;
     private bool _deathNotified;
     private bool _isMovingToTarget;
+    private Vector3 _lastDestination;
+    private float _lastDestinationSetTime;
+    private bool _hasLastDestination;
 
     public bool IsDead => _isDead;
     public float CurrentHealth => _currentHealth;
@@ -162,7 +167,9 @@ public class MutantStalkerAI : MonoBehaviour, IDamageable
         if (!_hasTarget && distance <= detectionRange)
             SetActive(true);
 
-        if (_hasTarget && distance > loseTargetRange)
+        float effectiveLoseTargetRange = Mathf.Max(loseTargetRange, detectionRange);
+
+        if (_hasTarget && distance > effectiveLoseTargetRange)
         {
             SetActive(false);
             StopMoving();
@@ -225,15 +232,15 @@ public class MutantStalkerAI : MonoBehaviour, IDamageable
                 Mathf.Max(0.1f, attackRange - attackStopBuffer)
             );
 
-            _agent.SetDestination(slotPosition);
+            SetDestinationIfNeeded(slotPosition);
         }
         else if (NavMesh.SamplePosition(target.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
         {
-            _agent.SetDestination(hit.position);
+            SetDestinationIfNeeded(hit.position);
         }
         else
         {
-            _agent.SetDestination(target.position);
+            SetDestinationIfNeeded(target.position);
         }
 
         if (mutantAnimator != null)
@@ -264,6 +271,33 @@ public class MutantStalkerAI : MonoBehaviour, IDamageable
 
         _agent.isStopped = true;
         _agent.ResetPath();
+        _hasLastDestination = false;
+    }
+
+    private void SetDestinationIfNeeded(Vector3 destination)
+    {
+        if (CanReuseCurrentDestination(destination))
+            return;
+
+        if (_agent.SetDestination(destination))
+        {
+            _lastDestination = destination;
+            _lastDestinationSetTime = Time.time;
+            _hasLastDestination = true;
+        }
+    }
+
+    private bool CanReuseCurrentDestination(Vector3 nextDestination)
+    {
+        if (!_hasLastDestination || (!_agent.hasPath && !_agent.pathPending))
+            return false;
+
+        float refreshDistance = Mathf.Max(0.05f, destinationRefreshDistance);
+        if ((nextDestination - _lastDestination).sqrMagnitude <= refreshDistance * refreshDistance)
+            return true;
+
+        float refreshInterval = Mathf.Max(0f, minDestinationRefreshInterval);
+        return refreshInterval > 0f && Time.time - _lastDestinationSetTime < refreshInterval;
     }
 
     private void TryAttack()

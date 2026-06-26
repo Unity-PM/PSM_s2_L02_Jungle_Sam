@@ -253,11 +253,13 @@ public class WeaponBase : MonoBehaviour
         if (_weaponAnimator == null)
             return;
 
+        bool changed = _lastIsWalking != isWalking || _lastIsRunning != isRunning;
+
         _lastIsWalking = isWalking;
         _lastIsRunning = isRunning;
 
         // Nie nadpisuj ruchu w trakcie animacji akcji.
-        if (_isReloading || Time.time < _shootAnimEndTime)
+        if (!changed || _isReloading || Time.time < _shootAnimEndTime)
             return;
 
         _weaponAnimator.SetBool(IsWalkingHash, isWalking);

@@ -4740,7 +4740,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.01
-  far clip plane: 1000
+  far clip plane: 500
   field of view: 90
   orthographic: 0
   orthographic size: 0.0056250007
@@ -4958,7 +4958,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAttackSlotManager
   slotsPerRing: 12
   ringSpacing: 0.8
-  slotRecheckInterval: 1.2
+  slotRecheckInterval: 0.12
   navMeshSampleRadius: 1.5
   rotateSlotsWithPlayer: 0
   drawGizmos: 1
